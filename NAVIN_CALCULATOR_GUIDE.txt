@@ -1,0 +1,107 @@
+═══════════════════════════════════════════════════════════
+  NAVIN DAILY CARBON CALCULATOR
+  v1.0 — Track Your Daily Routine Carbon Impact
+═══════════════════════════════════════════════════════════
+
+🎯 FITUR:
+Calculator memungkinkan user menghitung carbon footprint dari rutinitas 
+harian mereka dan otomatis di-track setiap hari.
+
+📊 CARA KERJA:
+
+1. BUKA APP
+   → Login ke NAVIN Carbon Tracker
+   → Klik tab "Aktivitas"
+
+2. PILIH MODE "🧮 KALKULATOR DAILY"
+   → Tab pertama di section "Upload Aktivitas Carbon"
+
+3. ISI DATA HARIAN KAMU:
+
+   🚗 MOBILITAS (Commute):
+      • Mobil (km/hari) → 0.25 kg CO₂e per km
+      • Motor (km/hari) → 0.15 kg CO₂e per km
+      • Sepeda/Jalan (km/hari) → 0 kg (zero emission!)
+      • Pesawat (jam) → 150 kg CO₂e per jam
+
+   ⚡ RUMAH & LISTRIK:
+      • AC (jam/hari) → 0.6 kg CO₂e per jam
+      • Listrik (kWh/hari) → 0.6 kg CO₂e per kWh
+
+   📱 ELEKTRONIK & GAYA HIDUP:
+      • TV (jam/hari) → 0.2 kg CO₂e per jam
+      • Laptop (jam/hari) → 0.15 kg CO₂e per jam
+      • Smartphone (jam/hari) → 0.05 kg CO₂e per jam
+      • Makan Daging (x/hari) → 15 kg CO₂e per porsi
+
+4. LIHAT ESTIMASI REAL-TIME:
+   • Total carbon footprint harian
+   • Berapa pohon yang perlu ditanam untuk offset (per tahun)
+   • Update otomatis saat kamu ubah input
+
+5. SIMPAN RUTINITAS HARIAN:
+   • Klik "💾 Simpan Rutinitas Harian"
+   • Data tersimpan di Google Sheets
+   • Bisa di-track trend harian, mingguan, bulanan
+
+📈 CONTOH PERHITUNGAN:
+
+User A (Jakarta, Office Worker):
+───────────────────────────────
+Mobil: 10 km/hari       = 10 × 0.25 = 2.50 kg
+AC: 8 jam/hari         = 8 × 0.6   = 4.80 kg
+TV: 3 jam/hari         = 3 × 0.2   = 0.60 kg
+Laptop: 8 jam/hari     = 8 × 0.15  = 1.20 kg
+Daging: 1 x/hari       = 1 × 15    = 15.00 kg
+───────────────────────────────
+TOTAL: 24.10 kg CO₂e/hari
+= 0.20 pohon/tahun untuk offset
+
+User B (Student, Green Lifestyle):
+───────────────────────────────
+Sepeda: 5 km/hari      = 5 × 0 = 0 kg
+AC: 2 jam/hari         = 2 × 0.6 = 1.20 kg
+TV: 1 jam/hari         = 1 × 0.2 = 0.20 kg
+Laptop: 6 jam/hari     = 6 × 0.15 = 0.90 kg
+Daging: 0 x/hari       = 0 × 15 = 0 kg
+───────────────────────────────
+TOTAL: 2.30 kg CO₂e/hari
+= 0.02 pohon/tahun untuk offset
+
+💡 TIPS MENGURANGI CARBON:
+
+✓ Mobilitas:
+  • Ganti mobil ke motor/sepeda/jalan
+  • Gunakan transportasi umum
+  • Carpool dengan teman/keluarga
+  • Hindari penerbangan jarak pendek
+
+✓ Rumah & Listrik:
+  • Kurangi penggunaan AC (gunakan kipas angin)
+  • Matikan listrik yang tidak digunakan
+  • Gunakan lampu LED
+  • Hemat penggunaan pemanas air
+
+✓ Elektronik:
+  • Kurangi jam screen time
+  • Mode gelap di device
+  • Unplug charger saat tidak digunakan
+
+✓ Gaya Hidup:
+  • Kurangi konsumsi daging (go vegetarian 1-2x/minggu)
+  • Beli local produce
+  • Reduce, reuse, recycle
+
+🎯 TRACKING & ANALYTICS:
+
+Setelah save rutinitas daily:
+• Dashboard update dengan total carbon
+• Leaderboard show ranking vs users lain
+• Analytics tab show trend over time
+• Bisa bandingkan daily, weekly, monthly
+
+📱 SHARE DENGAN TEMAN:
+Setiap data yang disave bisa di-lihat di Leaderboard 
+komunitas. Motivasi teman dengan eco-friendly routine kamu!
+
+═══════════════════════════════════════════════════════════

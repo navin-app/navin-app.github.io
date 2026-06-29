@@ -1,0 +1,58 @@
+🚀 QUICK START GUIDE
+
+STEP 1: Buka File
+━━━━━━━━━━━━━━━
+Buka NAVIN_Carbon_Tracker.html di browser kamu
+(Double-click file atau buka lewat browser File menu)
+
+STEP 2: Signup / Login
+━━━━━━━━━━━━━━━━━━━━
+- Baru? Klik "DAFTAR SEKARANG" → isi email, password, nama
+- Sudah punya akun? Klik "MASUK" → isi email & password
+
+STEP 3: Dashboard
+━━━━━━━━━━━━━━━
+Setelah login, kamu lihat:
+- Total carbon saved bulan ini
+- Plastik yang dicegah
+- Hydration (air minum)
+
+STEP 4: Upload Carbon Data
+━━━━━━━━━━━━━━━━━━━━━━━
+Klik avatar (top-right) → pilih:
+
+a) ⚡ UPLOAD CARBON CEPAT
+   - Pilih aktivitas (kopi, mobil, shopping, dll)
+   - Otomatis hitung carbon impact
+   - Simpan!
+
+b) 📸 UPLOAD BILL
+   - Upload foto receipt/bill
+   - Input nominal belanja (Rp)
+   - Otomatis hitung carbon dari spending
+   - Kategorikan (groceries, clothing, dll)
+   - Simpan!
+
+c) 📝 MANUAL ENTRY
+   - Input custom carbon value (kg)
+   - Input plastik prevented (pcs)
+   - Input hydration (L)
+   - Simpan!
+
+STEP 5: Lihat Ranking
+━━━━━━━━━━━━━━━━━━━
+Klik avatar → "🏆 Lihat Ranking"
+Lihat top 10 eco warriors & posisi kamu!
+
+TIPS:
+✓ Data auto-sync setiap 60 detik (cek "SYNCED" indicator)
+✓ Semua data pribadi, tersimpan aman di Google Sheets
+✓ Bisa logout kapan saja (klik avatar → "Logout")
+
+TROUBLESHOOT:
+❌ "Gagal terhubung ke server"?
+  → Pastikan internet connection aktif
+  → Refresh halaman
+  → Jika tetap error, hubungi admin
+
+═════════════════════════════════════

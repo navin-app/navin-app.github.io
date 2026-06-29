@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAVIN Desktop Experience</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+/* ── CONFIG ─────────────────────────────────────────────────── */
+:root{
+  --blue   :#0266FF;
+  --yellow :#EFFB00;
+  --black  :#050505;
+  --white  :#F5F7FA;
+  --green  :#00E676;
+  --red    :#FF3B30;
+}
+
+/* ── RESET ───────────────────────────────────────────────────── */
+*{ margin:0; padding:0; box-sizing:border-box; }
+body{ font-family:'Space Grotesk',sans-serif; background:var(--black); color:white; overflow-x:hidden; }
+
+/* ── SHELL ───────────────────────────────────────────────────── */
+.desktop-shell{
+  width:100%; min-height:100vh;
+  background:
+    radial-gradient(circle at top left,   rgba(239,251,0,.08),  transparent 30%),
+    radial-gradient(circle at bottom right,rgba(2,102,255,.25), transparent 35%),
+    var(--black);
+}
+
+/* ── NAV ─────────────────────────────────────────────────────── */
+.topbar{
+  position:sticky; top:0; z-index:100;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:20px 40px;
+  background:rgba(5,5,5,.85); backdrop-filter:blur(12px);
+  border-bottom:2px solid rgba(239,251,0,.3);
+}
+.logo{
+  font-size:62px; line-height:.8; font-style:italic; font-weight:900;
+  letter-spacing:-6px; color:var(--yellow); text-transform:uppercase;
+}
+.nav{
+  display:flex; gap:32px; text-transform:uppercase;
+  font-size:13px; font-weight:700; letter-spacing:2px;
+}
+.nav a{ color:white; text-decoration:none; opacity:.7; }
+.nav a:hover{ opacity:1; color:var(--yellow); }
+
+/* ── NAV AUTH BUTTONS ────────────────────────────────────────── */
+.nav-auth{ display:flex; gap:12px; align-items:center; }
+.btn-nav{
+  padding:8px 20px; border-radius:8px; font-family:'Space Grotesk',sans-serif;
+  font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  cursor:pointer; border:2px solid transparent; transition:all .2s;
+}
+.btn-nav.outline{ border-color:var(--yellow); color:var(--yellow); background:transparent; }
+.btn-nav.outline:hover{ background:var(--yellow); color:var(--black); }
+.btn-nav.solid{ background:var(--yellow); color:var(--black); border-color:var(--yellow); }
+.btn-nav.solid:hover{ background:#d4de00; }
+
+/* ── USER CHIP ───────────────────────────────────────────────── */
+.user-chip{
+  display:none; align-items:center; gap:10px;
+  background:rgba(239,251,0,.08); border:1.5px solid rgba(239,251,0,.3);
+  border-radius:32px; padding:8px 16px; cursor:pointer;
+}
+.user-chip.visible{ display:flex; }
+.user-chip-avatar{
+  width:28px; height:28px; border-radius:50%;
+  background:var(--yellow); color:var(--black);
+  font-weight:900; font-size:12px;
+  display:flex; align-items:center; justify-content:center;
+}
+.user-chip-name{ font-size:13px; font-weight:700; color:var(--yellow); }
+.user-chip-logout{
+  font-size:11px; opacity:.5; cursor:pointer; margin-left:4px;
+  padding-left:10px; border-left:1px solid rgba(239,251,0,.3);
+}
+.user-chip-logout:hover{ opacity:1; color:var(--red); }
+
+/* ── AUTH MODAL ──────────────────────────────────────────────── */
+.modal-overlay{
+  display:none; position:fixed; inset:0; z-index:999;
+  background:rgba(5,5,5,.92); backdrop-filter:blur(18px);
+  align-items:center; justify-content:center;
+}
+.modal-overlay.visible{ display:flex; }
+.modal{
+  width:100%; max-width:460px; margin:20px;
+  background:rgba(255,255,255,.04);
+  border:2px solid rgba(239,251,0,.3);
+  border-radius:28px; overflow:hidden;
+}
+.modal-header{
+  background:var(--yellow); color:var(--blue);
+  padding:16px 28px; font-size:11px; font-weight:900;
+  letter-spacing:2px; text-transform:uppercase;
+}
+.modal-body{ padding:36px 28px 28px; }
+.modal-title{
+  font-size:40px; font-weight:900; letter-spacing:-2px;
+  line-height:.9; margin-bottom:8px;
+}
+.modal-sub{ font-size:13px; opacity:.6; margin-bottom:28px; }
+.modal-tabs{
+  display:flex; gap:0; margin-bottom:28px;
+  border:2px solid rgba(239,251,0,.3); border-radius:10px; overflow:hidden;
+}
+.modal-tab{
+  flex:1; padding:10px; text-align:center;
+  font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  cursor:pointer; color:rgba(255,255,255,.5); transition:all .2s;
+}
+.modal-tab.active{ background:var(--yellow); color:var(--black); }
+.form-group{ margin-bottom:16px; }
+.form-label{ font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; opacity:.6; margin-bottom:6px; display:block; }
+.form-input{
+  width:100%; padding:14px 16px; border-radius:10px;
+  background:rgba(255,255,255,.06); border:2px solid rgba(239,251,0,.2);
+  color:white; font-family:'Space Grotesk',sans-serif; font-size:14px;
+  outline:none; transition:border-color .2s;
+}
+.form-input:focus{ border-color:var(--yellow); }
+.form-input::placeholder{ opacity:.3; }
+.btn-submit{
+  width:100%; padding:16px; margin-top:8px;
+  background:var(--yellow); color:var(--black);
+  border:none; border-radius:12px; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:900;
+  letter-spacing:1.5px; text-transform:uppercase; transition:background .2s;
+}
+.btn-submit:hover{ background:#d4de00; }
+.btn-submit:disabled{ opacity:.5; cursor:not-allowed; }
+.form-message{ margin-top:12px; font-size:13px; text-align:center; min-height:18px; }
+.form-message.error{ color:var(--red); }
+.form-message.success{ color:var(--green); }
+
+/* ── DASHBOARD OVERLAY ───────────────────────────────────────── */
+.user-dashboard{
+  display:none; position:fixed; inset:0; z-index:998;
+  background:rgba(5,5,5,.96); backdrop-filter:blur(18px);
+  overflow-y:auto;
+}
+.user-dashboard.visible{ display:block; }
+.ud-header{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:24px 40px; border-bottom:2px solid rgba(239,251,0,.2);
+}
+.ud-logo{ font-size:32px; font-weight:900; font-style:italic; letter-spacing:-3px; color:var(--yellow); }
+.ud-close{
+  padding:10px 20px; border:2px solid rgba(239,251,0,.4);
+  border-radius:8px; cursor:pointer; color:var(--yellow);
+  font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; transition:all .2s;
+}
+.ud-close:hover{ background:var(--yellow); color:var(--black); }
+.ud-body{ padding:40px; }
+.ud-greeting{ font-size:56px; font-weight:900; letter-spacing:-4px; line-height:.9; margin-bottom:6px; }
+.ud-sub{ font-size:14px; opacity:.5; margin-bottom:36px; }
+.ud-stats{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:40px;
+}
+.ud-stat{
+  border-radius:20px; overflow:hidden; border:2px solid rgba(239,251,0,.2);
+}
+.ud-stat-header{
+  padding:12px 18px; font-size:11px; font-weight:900; letter-spacing:2px;
+  text-transform:uppercase;
+}
+.ud-stat.green .ud-stat-header{ background:var(--green); color:var(--black); }
+.ud-stat.blue  .ud-stat-header{ background:var(--blue);  color:white; }
+.ud-stat.yellow .ud-stat-header{ background:var(--yellow); color:var(--black); }
+.ud-stat-body{ padding:20px 18px; background:rgba(255,255,255,.03); }
+.ud-stat-number{ font-size:52px; font-weight:900; letter-spacing:-3px; line-height:.9; }
+.ud-stat-unit{ font-size:13px; opacity:.5; margin-top:6px; }
+
+/* Upload Form */
+.ud-upload{
+  background:rgba(255,255,255,.03); border:2px solid rgba(239,251,0,.15);
+  border-radius:24px; padding:32px; margin-bottom:32px;
+}
+.ud-section-title{ font-size:24px; font-weight:900; letter-spacing:-1px; margin-bottom:20px; }
+.ud-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.ud-form-group{ display:flex; flex-direction:column; }
+.ud-form-full{ grid-column:1/-1; }
+
+/* History */
+.ud-history{ background:rgba(255,255,255,.03); border:2px solid rgba(239,251,0,.15); border-radius:24px; padding:32px; }
+.ud-table{ width:100%; border-collapse:collapse; margin-top:16px; }
+.ud-table th{
+  text-align:left; padding:10px 14px; font-size:11px; font-weight:900;
+  letter-spacing:2px; text-transform:uppercase; opacity:.5;
+  border-bottom:2px solid rgba(255,255,255,.08);
+}
+.ud-table td{ padding:12px 14px; font-size:13px; border-bottom:1px solid rgba(255,255,255,.05); }
+.ud-table tr:hover td{ background:rgba(239,251,0,.04); }
+.ud-empty{ text-align:center; padding:40px; opacity:.3; font-size:14px; }
+
+/* ── HERO ────────────────────────────────────────────────────── */
+.hero{ padding:48px; }
+.hero-grid{ display:grid; grid-template-columns:1.4fr .8fr; gap:24px; }
+.panel{ border:2px solid rgba(239,251,0,.4); border-radius:28px; overflow:hidden; background:rgba(255,255,255,.03); backdrop-filter:blur(10px); }
+.panel-header{ background:var(--yellow); color:var(--blue); padding:14px 20px; font-size:12px; font-weight:900; letter-spacing:2px; text-transform:uppercase; }
+.hero-main{
+  min-height:760px; background:linear-gradient(135deg,#0266FF 0%,#003EB5 100%);
+  display:flex; flex-direction:column; justify-content:space-between;
+}
+.hero-body{ padding:42px; }
+.hero-title{ font-size:140px; line-height:.82; letter-spacing:-10px; font-weight:900; text-transform:uppercase; max-width:950px; }
+.hero-sub{ margin-top:28px; font-size:20px; line-height:1.7; max-width:700px; opacity:.9; }
+.hero-footer{ display:flex; justify-content:space-between; gap:20px; padding:32px 42px; border-top:2px solid rgba(255,255,255,.18); }
+.stat{ flex:1; }
+.stat-label{ font-size:11px; letter-spacing:2px; text-transform:uppercase; opacity:.7; font-weight:700; }
+.stat-number{ font-size:64px; line-height:.9; letter-spacing:-4px; margin-top:12px; font-weight:900; }
+.side-grid{ display:grid; grid-template-columns:1fr; gap:22px; }
+.widget{ min-height:240px; display:flex; flex-direction:column; justify-content:space-between; }
+.widget-body{ padding:28px; }
+.widget.yellow{ background:var(--yellow); color:var(--black); }
+.widget.white{ background:var(--white); color:var(--blue); }
+.widget.blue{ background:var(--blue); color:white; }
+.widget.black{ background:#101010; color:var(--yellow); }
+.widget-number{ font-size:76px; line-height:.9; letter-spacing:-5px; font-weight:900; }
+.widget p{ margin-top:18px; font-size:14px; line-height:1.7; }
+
+/* ── DASHBOARD SECTION ───────────────────────────────────────── */
+.dashboard{ padding:0 48px 48px 48px; }
+.section-title{ font-size:88px; line-height:.9; letter-spacing:-6px; text-transform:uppercase; font-weight:900; margin-bottom:32px; }
+.card-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+.card{ min-height:300px; border-radius:26px; border:2px solid rgba(255,255,255,.12); overflow:hidden; }
+.card-header{ padding:16px 20px; font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:900; }
+.card-body{ padding:28px; }
+.card.yellow{ background:var(--yellow); color:var(--black); }
+.card.blue  { background:var(--blue);   color:white; }
+.card.dark  { background:#0E0E0E;       color:white; }
+.card-number{ font-size:86px; line-height:.9; letter-spacing:-6px; font-weight:900; }
+.card-desc  { margin-top:22px; font-size:15px; line-height:1.8; opacity:.9; }
+
+/* ── FOOTER ──────────────────────────────────────────────────── */
+.footer{
+  margin-top:24px; border-top:2px solid rgba(239,251,0,.3);
+  display:flex; justify-content:space-between; align-items:center;
+  padding:24px 48px; font-size:12px; text-transform:uppercase; letter-spacing:2px;
+}
+.footer strong{ color:var(--yellow); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
+@media(max-width:1200px){
+  .hero-grid{ grid-template-columns:1fr; }
+  .card-grid{ grid-template-columns:1fr; }
+  .hero-title{ font-size:90px; }
+  .ud-stats{ grid-template-columns:1fr; }
+  .ud-form-grid{ grid-template-columns:1fr; }
+}
+@media(max-width:768px){
+  .topbar{ padding:18px 20px; }
+  .logo{ font-size:42px; }
+  .nav{ display:none; }
+  .hero,.dashboard{ padding:20px; }
+  .hero-title{ font-size:58px; letter-spacing:-3px; }
+  .section-title{ font-size:48px; }
+  .hero-footer{ flex-direction:column; }
+  .footer{ flex-direction:column; gap:10px; text-align:center; padding:20px; }
+  .ud-body{ padding:20px; }
+  .ud-greeting{ font-size:36px; }
+  .ud-header{ padding:18px 20px; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══ AUTH MODAL ══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <div class="modal-header">NAVIN — Eco Performance System</div>
+    <div class="modal-body">
+      <div class="modal-title">WELCOME</div>
+      <div class="modal-sub">Track your hydration &amp; carbon impact</div>
+
+      <div class="modal-tabs">
+        <div class="modal-tab active" id="tabLogin" onclick="switchTab('login')">Login</div>
+        <div class="modal-tab" id="tabSignup" onclick="switchTab('signup')">Signup</div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="formLogin">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="loginEmail" type="email" placeholder="email@navin.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" id="loginPassword" type="password" placeholder="••••••••">
+        </div>
+        <button class="btn-submit" id="btnLogin" onclick="doLogin()">LOGIN →</button>
+        <div class="form-message" id="loginMsg"></div>
+      </div>
+
+      <!-- Signup Form -->
+      <div id="formSignup" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap</label>
+          <input class="form-input" id="signupName" type="text" placeholder="Nama kamu">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="signupEmail" type="email" placeholder="email@navin.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" id="signupPassword" type="password" placeholder="Min. 6 karakter">
+        </div>
+        <button class="btn-submit" id="btnSignup" onclick="doSignup()">DAFTAR →</button>
+        <div class="form-message" id="signupMsg"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ USER DASHBOARD ═══════════════════════════════════════════ -->
+<div class="user-dashboard" id="userDashboard">
+  <div class="ud-header">
+    <div class="ud-logo">NAVIN</div>
+    <button class="ud-close" onclick="closeDashboard()">CLOSE ×</button>
+  </div>
+  <div class="ud-body">
+
+    <div class="ud-greeting" id="udGreeting">HELLO, —</div>
+    <div class="ud-sub" id="udSub">Member since —</div>
+
+    <!-- Stats -->
+    <div class="ud-stats">
+      <div class="ud-stat green">
+        <div class="ud-stat-header">Carbon Saved</div>
+        <div class="ud-stat-body">
+          <div class="ud-stat-number" id="udCarbon">0</div>
+          <div class="ud-stat-unit">kg CO₂ total</div>
+        </div>
+      </div>
+      <div class="ud-stat blue">
+        <div class="ud-stat-header">Plastic Prevented</div>
+        <div class="ud-stat-body">
+          <div class="ud-stat-number" id="udPlastic">0</div>
+          <div class="ud-stat-unit">botol plastik</div>
+        </div>
+      </div>
+      <div class="ud-stat yellow">
+        <div class="ud-stat-header">Total Hydration</div>
+        <div class="ud-stat-body">
+          <div class="ud-stat-number" id="udHydration">0</div>
+          <div class="ud-stat-unit">liter air AWG</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="ud-upload">
+      <div class="ud-section-title">Upload Data Carbon</div>
+      <div class="ud-form-grid">
+        <div class="ud-form-group">
+          <label class="form-label">Carbon Saved (kg)</label>
+          <input class="form-input" id="upCarbon" type="number" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="ud-form-group">
+          <label class="form-label">Plastic Prevented (pcs)</label>
+          <input class="form-input" id="upPlastic" type="number" min="0" placeholder="0">
+        </div>
+        <div class="ud-form-group">
+          <label class="form-label">Hydration (liter)</label>
+          <input class="form-input" id="upHydration" type="number" min="0" step="0.1" placeholder="0.0">
+        </div>
+        <div class="ud-form-group">
+          <label class="form-label">Tipe Aktivitas</label>
+          <input class="form-input" id="upType" type="text" placeholder="Refill / AWG / Manual">
+        </div>
+        <div class="ud-form-group ud-form-full">
+          <label class="form-label">Catatan</label>
+          <input class="form-input" id="upNotes" type="text" placeholder="Opsional — deskripsi singkat">
+        </div>
+        <div class="ud-form-full">
+          <button class="btn-submit" id="btnUpload" onclick="doUpload()">SIMPAN DATA →</button>
+          <div class="form-message" id="uploadMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="ud-history">
+      <div class="ud-section-title">Riwayat Aktivitas</div>
+      <div id="udHistoryContainer">
+        <div class="ud-empty">Loading data...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ══════════════════════════════════════════════════ -->
+<div class="desktop-shell">
+
+  <div class="topbar">
+    <div class="logo">NAVIN</div>
+    <div class="nav">
+      <a href="#">Performance</a>
+      <a href="#">Hydration</a>
+      <a href="#">AWG System</a>
+      <a href="#">Node Network</a>
+      <a href="#">Community</a>
+    </div>
+    <div class="nav-auth" id="navAuth">
+      <button class="btn-nav outline" onclick="showAuth('login')">LOGIN</button>
+      <button class="btn-nav solid"   onclick="showAuth('signup')">SIGNUP</button>
+    </div>
+    <div class="user-chip" id="userChip" onclick="openDashboard()">
+      <div class="user-chip-avatar" id="chipAvatar">?</div>
+      <div class="user-chip-name" id="chipName">—</div>
+      <div class="user-chip-logout" onclick="event.stopPropagation(); doLogout()">LOGOUT</div>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="hero-grid">
+      <div class="panel hero-main">
+        <div class="panel-header">Future Hydration Performance System</div>
+        <div class="hero-body">
+          <div class="hero-title">SPORT TECH HYDRATION OS</div>
+          <div class="hero-sub">
+            Atmospheric Water Generation ecosystem built for future sports culture,
+            eco-performance tracking, hydration optimization, and next generation community network.
+          </div>
+        </div>
+        <div class="hero-footer">
+          <div class="stat">
+            <div class="stat-label">Plastic Prevented</div>
+            <div class="stat-number" id="globalPlastic">320</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Carbon Saved</div>
+            <div class="stat-number" id="globalCarbon">4.8KG</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Active Hubs</div>
+            <div class="stat-number">12</div>
+          </div>
+        </div>
+      </div>
+      <div class="side-grid">
+        <div class="panel widget yellow">
+          <div class="panel-header">Eco XP</div>
+          <div class="widget-body">
+            <div class="widget-number">+180</div>
+            <p>Monthly refill contribution &amp; hydration score.</p>
+          </div>
+        </div>
+        <div class="panel widget white">
+          <div class="panel-header">Rank System</div>
+          <div class="widget-body">
+            <div class="widget-number">LV03</div>
+            <p>Future Guardian unlocked.</p>
+          </div>
+        </div>
+        <div class="panel widget blue">
+          <div class="panel-header">Active Node</div>
+          <div class="widget-body">
+            <div class="widget-number">JKT12</div>
+            <p>Connected to regional hydration ecosystem.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard">
+    <div class="section-title">Live Dashboard</div>
+    <div class="card-grid">
+      <div class="card yellow">
+        <div class="card-header">Daily Hydration</div>
+        <div class="card-body">
+          <div class="card-number">2.4L</div>
+          <div class="card-desc">Hydration activity synced with environmental impact engine.</div>
+        </div>
+      </div>
+      <div class="card blue">
+        <div class="card-header">AWG Source</div>
+        <div class="card-body">
+          <div class="card-number">PURE AIR</div>
+          <div class="card-desc">Water harvested directly from atmospheric humidity technology.</div>
+        </div>
+      </div>
+      <div class="card dark">
+        <div class="card-header">Community Node</div>
+        <div class="card-body">
+          <div class="card-number">12 HUBS</div>
+          <div class="card-desc">Jakarta, Bali, Bandung, Surabaya and future satellite ecosystems.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div>NAVIN © 2026</div>
+    <div><strong>SPORT TECH</strong> / FUTURE HYDRATION CULTURE</div>
+  </footer>
+
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  CONFIG — Ganti URL ini setelah deploy Google Apps Script
+// ════════════════════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycby-fxrDhMVd0jx6m6UmNnyCIxhSDIiVB6BTW_iENDgcuZ-3svHTgsxKe9vxwwCbjU33OQ/exec';
+
+// ── Session ──────────────────────────────────────────────────────
+function getSession()  { try { return JSON.parse(localStorage.getItem('navin_session') || 'null'); } catch(e){ return null; } }
+function saveSession(s){ localStorage.setItem('navin_session', JSON.stringify(s)); }
+function clearSession(){ localStorage.removeItem('navin_session'); }
+
+// ── UI Helpers ────────────────────────────────────────────────────
+function showAuth(tab) {
+  document.getElementById('authModal').classList.add('visible');
+  switchTab(tab || 'login');
+}
+
+function hideAuth() {
+  document.getElementById('authModal').classList.remove('visible');
+}
+
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('formLogin').style.display  = isLogin ? '' : 'none';
+  document.getElementById('formSignup').style.display = isLogin ? 'none' : '';
+}
+
+function setNavState(session) {
+  const navAuth  = document.getElementById('navAuth');
+  const userChip = document.getElementById('userChip');
+  if (session) {
+    navAuth.style.display  = 'none';
+    userChip.classList.add('visible');
+    document.getElementById('chipAvatar').textContent = session.name[0].toUpperCase();
+    document.getElementById('chipName').textContent   = session.name.split(' ')[0].toUpperCase();
+  } else {
+    navAuth.style.display  = 'flex';
+    userChip.classList.remove('visible');
+  }
+}
+
+function setMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className   = 'form-message ' + (type || '');
+}
+
+function setBtn(id, loading) {
+  const btn = document.getElementById(id);
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Loading...' : btn.dataset.label || btn.textContent;
+}
+
+// ── API Call ──────────────────────────────────────────────────────
+async function apiCall(body) {
+  const url = API_URL + '?payload=' + encodeURIComponent(JSON.stringify(body));
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Response bukan JSON: ' + text.substring(0,100)); }
+}
+
+// ── Login ─────────────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) return setMsg('loginMsg','Isi email dan password dulu.','error');
+
+  document.getElementById('btnLogin').disabled = true;
+  document.getElementById('btnLogin').textContent = 'Loading...';
+  setMsg('loginMsg','','');
+
+  try {
+    const data = await apiCall({ action:'login', email, password });
+    if (data.success) {
+      saveSession({ token:data.token, userId:data.userId, name:data.name, email:data.email, joinDate:data.joinDate });
+      setNavState(getSession());
+      hideAuth();
+      setTimeout(() => openDashboard(), 300);
+    } else {
+      setMsg('loginMsg', data.message, 'error');
+    }
+  } catch(e) {
+    setMsg('loginMsg', e.message, 'error');
+  }
+
+  document.getElementById('btnLogin').disabled = false;
+  document.getElementById('btnLogin').textContent = 'LOGIN →';
+}
+
+// ── Signup ────────────────────────────────────────────────────────
+async function doSignup() {
+  const name     = document.getElementById('signupName').value.trim();
+  const email    = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  if (!name || !email || !password) return setMsg('signupMsg','Semua field wajib diisi.','error');
+  if (password.length < 6)          return setMsg('signupMsg','Password min. 6 karakter.','error');
+
+  document.getElementById('btnSignup').disabled = true;
+  document.getElementById('btnSignup').textContent = 'Loading...';
+  setMsg('signupMsg','','');
+
+  try {
+    const data = await apiCall({ action:'signup', name, email, password });
+    if (data.success) {
+      saveSession({ token:data.token, userId:data.userId, name:data.name, email:data.email });
+      setNavState(getSession());
+      hideAuth();
+      setTimeout(() => openDashboard(), 300);
+    } else {
+      setMsg('signupMsg', data.message, 'error');
+    }
+  } catch(e) {
+    setMsg('signupMsg', e.message, 'error');
+  }
+
+  document.getElementById('btnSignup').disabled = false;
+  document.getElementById('btnSignup').textContent = 'DAFTAR →';
+}
+
+// ── Logout ────────────────────────────────────────────────────────
+function doLogout() {
+  clearSession();
+  setNavState(null);
+  document.getElementById('userDashboard').classList.remove('visible');
+}
+
+// ── Open Dashboard ────────────────────────────────────────────────
+async function openDashboard() {
+  const session = getSession();
+  if (!session) return showAuth('login');
+
+  document.getElementById('userDashboard').classList.add('visible');
+  document.getElementById('udGreeting').textContent = 'HELLO, ' + session.name.split(' ')[0].toUpperCase();
+  document.getElementById('udSub').textContent      = 'Member sejak ' + (session.joinDate ? new Date(session.joinDate).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) : '—');
+
+  document.getElementById('udHistoryContainer').innerHTML = '<div class="ud-empty">Loading data...</div>';
+
+  try {
+    const data = await apiCall({ action:'getMyData', token:session.token, userId:session.userId, email:session.email });
+    if (data.success) {
+      document.getElementById('udCarbon').textContent    = data.totals.carbon;
+      document.getElementById('udPlastic').textContent   = data.totals.plastic;
+      document.getElementById('udHydration').textContent = data.totals.hydration;
+      renderHistory(data.records);
+    }
+  } catch(e) {
+    document.getElementById('udHistoryContainer').innerHTML = '<div class="ud-empty">Gagal load data. ' + e.message + '</div>';
+  }
+}
+
+function closeDashboard() {
+  document.getElementById('userDashboard').classList.remove('visible');
+}
+
+// ── Upload Carbon Data ────────────────────────────────────────────
+async function doUpload() {
+  const session = getSession();
+  if (!session) return;
+
+  const carbon   = parseFloat(document.getElementById('upCarbon').value)   || 0;
+  const plastic  = parseInt(document.getElementById('upPlastic').value)    || 0;
+  const hydration= parseFloat(document.getElementById('upHydration').value)|| 0;
+  const type     = document.getElementById('upType').value.trim()    || 'Manual';
+  const notes    = document.getElementById('upNotes').value.trim();
+
+  if (!carbon && !plastic && !hydration) return setMsg('uploadMsg','Isi minimal satu nilai.','error');
+
+  document.getElementById('btnUpload').disabled     = true;
+  document.getElementById('btnUpload').textContent  = 'Menyimpan...';
+  setMsg('uploadMsg','','');
+
+  try {
+    const data = await apiCall({
+      action: 'uploadCarbon',
+      token  : session.token,
+      userId : session.userId,
+      email  : session.email,
+      carbonSaved      : carbon,
+      plasticPrevented : plastic,
+      hydration,
+      activityType : type,
+      notes
+    });
+
+    if (data.success) {
+      setMsg('uploadMsg', '✓ Data berhasil disimpan!', 'success');
+      document.getElementById('upCarbon').value = '';
+      document.getElementById('upPlastic').value = '';
+      document.getElementById('upHydration').value = '';
+      document.getElementById('upType').value = '';
+      document.getElementById('upNotes').value = '';
+      // Refresh stats
+      setTimeout(() => openDashboard(), 800);
+    } else {
+      setMsg('uploadMsg', data.message, 'error');
+    }
+  } catch(e) {
+    setMsg('uploadMsg', e.message, 'error');
+  }
+
+  document.getElementById('btnUpload').disabled    = false;
+  document.getElementById('btnUpload').textContent = 'SIMPAN DATA →';
+}
+
+// ── Render History ────────────────────────────────────────────────
+function renderHistory(records) {
+  const container = document.getElementById('udHistoryContainer');
+  if (!records || records.length === 0) {
+    container.innerHTML = '<div class="ud-empty">Belum ada data. Upload aktivitas pertama kamu!</div>';
+    return;
+  }
+  const sorted = [...records].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const rows = sorted.map(r => `
+    <tr>
+      <td>${new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
+      <td>${r.activityType}</td>
+      <td>${r.carbonSaved} kg</td>
+      <td>${r.plasticPrevented} pcs</td>
+      <td>${r.hydration} L</td>
+      <td style="opacity:.5">${r.notes || '—'}</td>
+    </tr>`).join('');
+  container.innerHTML = `
+    <table class="ud-table">
+      <thead><tr><th>Tanggal</th><th>Aktivitas</th><th>Carbon</th><th>Plastik</th><th>Hydration</th><th>Catatan</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+(function init() {
+  const session = getSession();
+  setNavState(session);
+  if (!session) {
+    showAuth('login');
+  }
+})();
+</script>
+
+</body>
+</html>

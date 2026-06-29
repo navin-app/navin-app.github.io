@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAVIN — Personal Carbon Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --blue: #0266FF; --yellow: #EFFB00; --black: #050505; --white: #F5F7FA; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Space Grotesk', sans-serif; background: var(--black); color: white; padding: 40px 20px; }
+    .container { max-width: 700px; margin: 0 auto; }
+    h1 { font-size: 48px; font-weight: 900; color: var(--yellow); margin-bottom: 12px; letter-spacing: -2px; }
+    .subtitle { font-size: 16px; opacity: 0.7; margin-bottom: 36px; }
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 36px; }
+    .feature { background: rgba(239,251,0,.08); border: 2px solid rgba(239,251,0,.2); border-radius: 12px; padding: 20px; }
+    .feature-icon { font-size: 28px; margin-bottom: 8px; }
+    .feature-name { font-weight: 700; font-size: 14px; }
+    .btn { display: inline-block; padding: 16px 32px; background: var(--yellow); color: var(--black); text-decoration: none; border-radius: 12px; font-weight: 900; font-size: 14px; border: none; cursor: pointer; transition: all .2s; }
+    .btn:hover { background: #d4de00; transform: translateY(-2px); }
+    .btn-alt { background: rgba(239,251,0,.2); color: var(--yellow); margin-left: 12px; }
+    .btn-alt:hover { background: rgba(239,251,0,.3); }
+    .info { background: rgba(2,102,255,.1); border: 2px solid rgba(2,102,255,.3); border-radius: 12px; padding: 20px; margin-top: 36px; font-size: 13px; line-height: 1.8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>NAVIN<sup style="font-size: 24px; color: var(--blue);">carbon</sup></h1>
+    <div class="subtitle">Personal Carbon OS untuk Indonesia</div>
+
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-name">Quick Activity Picker</div>
+        <div style="font-size: 12px; opacity: 0.6; margin-top: 8px;">25+ aktivitas dengan estimasi carbon otomatis</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📸</div>
+        <div class="feature-name">Bill Upload</div>
+        <div style="font-size: 12px; opacity: 0.6; margin-top: 8px;">Upload foto receipt, auto-calculate carbon</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏆</div>
+        <div class="feature-name">Leaderboard</div>
+        <div style="font-size: 12px; opacity: 0.6; margin-top: 8px;">Ranking top eco warriors di komunitas</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <div class="feature-name">Dashboard</div>
+        <div style="font-size: 12px; opacity: 0.6; margin-top: 8px;">Summary carbon, plastik, hydration tracking</div>
+      </div>
+    </div>
+
+    <div>
+      <button onclick="openApp('NAVIN_Carbon_Tracker.html')" class="btn">MULAI SEKARANG →</button>
+      <button onclick="openApp('NAVIN_Desktop_Design.html')" class="btn btn-alt">VERSI ALTERNATIF</button>
+    </div>
+
+    <div class="info">
+      <strong>💡 Info:</strong><br>
+      • Semua data disimpan di Google Sheets (aman & terenkripsi)<br>
+      • Tidak ada tracking atau ads, 100% privacy-focused<br>
+      • Login diperlukan untuk sinkronisasi data<br>
+      • Bisa digunakan offline (limited functionality)<br>
+      <br>
+      <strong>📄 File yang ada:</strong><br>
+      • NAVIN_README.txt — Info lengkap<br>
+      • NAVIN_QUICK_START.txt — Panduan cepat<br>
+      • NAVIN_Carbon_Tracker.html — App utama<br>
+      • NAVIN_Desktop_Design.html — Versi alternatif
+    </div>
+  </div>
+
+  <script>
+    function openApp(file) {
+      window.location.href = file;
+    }
+  </script>
+</body>
+</html>

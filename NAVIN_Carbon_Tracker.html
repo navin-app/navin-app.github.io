@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAVIN — Personal Carbon OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+
+/* ══════════════════════════════════════════════════
+   ROOT & RESET
+══════════════════════════════════════════════════ */
+:root{
+  --blue   : #0266FF;
+  --yellow : #EFFB00;
+  --black  : #050505;
+  --white  : #F5F7FA;
+  --green  : #00C853;
+  --red    : #FF3B30;
+  --orange : #FF6B00;
+  --gray   : #1A1A1A;
+}
+*{ margin:0; padding:0; box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  font-family:'Space Grotesk',sans-serif;
+  background:var(--black);
+  color:white;
+  overflow-x:hidden;
+}
+
+/* ══════════════════════════════════════════════════
+   AUTH GATE — full-screen modal sebelum app
+══════════════════════════════════════════════════ */
+.auth-gate{
+  position:fixed; inset:0; z-index:9999;
+  background:var(--black);
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity .4s, visibility .4s;
+}
+.auth-gate.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+.auth-box{
+  width:100%; max-width:480px; margin:20px;
+  background:rgba(255,255,255,.04);
+  border:2px solid rgba(239,251,0,.3);
+  border-radius:28px; overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,.6);
+}
+.auth-box-head{
+  background:var(--yellow); color:var(--blue);
+  padding:16px 28px;
+  font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.auth-online-dot{
+  width:8px; height:8px; border-radius:50%;
+  background:var(--green); display:inline-block; margin-right:6px;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.3} }
+.auth-body{ padding:36px 28px 28px; }
+.auth-title{ font-size:44px; font-weight:900; letter-spacing:-3px; line-height:.9; margin-bottom:6px; }
+.auth-sub{ font-size:13px; opacity:.5; margin-bottom:28px; line-height:1.6; }
+.auth-tabs{
+  display:flex; border:2px solid rgba(239,251,0,.25);
+  border-radius:10px; overflow:hidden; margin-bottom:24px;
+}
+.auth-tab{
+  flex:1; padding:10px; text-align:center;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:12px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  cursor:pointer; color:rgba(255,255,255,.4); background:transparent;
+  border:none; transition:all .2s;
+}
+.auth-tab.active{ background:var(--yellow); color:var(--black); }
+.auth-field{ margin-bottom:14px; }
+.auth-label{ font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; opacity:.5; margin-bottom:6px; display:block; }
+.auth-input{
+  width:100%; padding:14px 16px; border-radius:10px;
+  background:rgba(255,255,255,.06); border:2px solid rgba(239,251,0,.15);
+  color:white; font-family:'Space Grotesk',sans-serif; font-size:14px;
+  outline:none; transition:border-color .2s;
+}
+.auth-input:focus{ border-color:rgba(239,251,0,.5); }
+.auth-input::placeholder{ opacity:.25; }
+.auth-btn{
+  width:100%; padding:16px; margin-top:8px;
+  background:var(--yellow); color:var(--black);
+  border:none; border-radius:12px; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:14px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase;
+  transition:background .2s;
+}
+.auth-btn:hover:not(:disabled){ background:#d4de00; }
+.auth-btn:disabled{ opacity:.5; cursor:not-allowed; }
+.auth-msg{ margin-top:12px; font-size:13px; text-align:center; min-height:18px; line-height:1.5; }
+.auth-msg.err{ color:var(--red); }
+.auth-msg.ok { color:var(--green); }
+.auth-offline{
+  margin-top:16px; padding:12px 16px;
+  background:rgba(255,59,48,.1); border:1.5px solid rgba(255,59,48,.3);
+  border-radius:10px; font-size:12px; color:rgba(255,180,150,1); line-height:1.5;
+  display:none;
+}
+.auth-offline.show{ display:block; }
+
+/* ══════════════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════════════ */
+.topbar{
+  position:sticky; top:0; z-index:200;
+  background:var(--blue);
+  border-bottom:3px solid var(--yellow);
+  padding:0 32px;
+  height:64px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.logo{
+  font-size:40px; font-weight:900; font-style:italic;
+  letter-spacing:-4px; color:var(--yellow); text-transform:uppercase; line-height:1;
+}
+.logo sup{ font-size:11px; letter-spacing:2px; font-style:normal; vertical-align:super; margin-left:4px; opacity:.7; }
+.topbar-center{
+  display:flex; gap:0;
+  background:rgba(0,0,0,.2);
+  border-radius:10px; overflow:hidden;
+}
+.tab-btn{
+  padding:8px 18px;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;
+  color:rgba(255,255,255,.5); background:transparent;
+  border:none; cursor:pointer; transition:all .2s;
+}
+.tab-btn.active{ background:var(--yellow); color:var(--black); }
+.topbar-right{
+  display:flex; gap:10px; align-items:center;
+}
+.top-stat{
+  font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  color:rgba(255,255,255,.6);
+}
+.top-stat strong{ color:var(--yellow); font-size:16px; }
+.avatar{
+  width:34px; height:34px; border-radius:50%;
+  background:var(--yellow); color:var(--black);
+  font-weight:900; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid var(--black); cursor:pointer;
+}
+
+/* ══════════════════════════════════════════════════
+   SECTIONS / TAB PANELS
+══════════════════════════════════════════════════ */
+.panel-section{ display:none; }
+.panel-section.active{ display:block; }
+
+/* ══════════════════════════════════════════════════
+   HERO — DASHBOARD
+══════════════════════════════════════════════════ */
+.hero{
+  min-height:calc(100vh - 64px);
+  background:linear-gradient(135deg,#0266FF 0%,#003EB5 100%);
+  padding:36px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:'';
+  position:absolute; inset:0;
+  background:radial-gradient(circle at 80% 20%, rgba(239,251,0,.12), transparent 50%),
+             radial-gradient(circle at 10% 90%, rgba(0,0,0,.3), transparent 40%);
+}
+.hero-layout{
+  position:relative;
+  display:grid;
+  grid-template-columns:1.5fr 1fr;
+  gap:24px;
+  height:100%;
+}
+.pcard{
+  border:3px solid rgba(0,0,0,.5);
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:0 8px 0 rgba(0,0,0,.4);
+}
+.pcard-head{
+  background:var(--yellow); color:var(--blue);
+  padding:13px 20px;
+  font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase;
+}
+.pcard-body{ padding:28px; }
+
+/* Main hero card */
+.hero-main{
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(8px);
+  display:flex; flex-direction:column; justify-content:space-between;
+  min-height:600px;
+}
+.h-tag{ font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; opacity:.6; margin-bottom:12px; }
+.h-title{
+  font-size:100px; font-weight:900; letter-spacing:-8px; line-height:.85; text-transform:uppercase;
+}
+.h-sub{ margin-top:20px; font-size:16px; line-height:1.7; opacity:.8; max-width:500px; }
+.h-score{
+  display:flex; gap:0; margin-top:28px;
+  border:2px solid rgba(255,255,255,.15); border-radius:14px; overflow:hidden;
+  width:fit-content;
+}
+.h-score-item{
+  padding:12px 20px; border-right:2px solid rgba(255,255,255,.15);
+}
+.h-score-item:last-child{ border-right:none; }
+.h-score-label{ font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; opacity:.5; }
+.h-score-val{ font-size:28px; font-weight:900; letter-spacing:-2px; margin-top:2px; }
+.h-score-val.green{ color:var(--green); }
+.h-score-val.yellow{ color:var(--yellow); }
+.h-score-val.orange{ color:var(--orange); }
+
+/* Monthly total block */
+.h-monthly{
+  background:var(--yellow); color:var(--black);
+  border-radius:20px; padding:24px 28px;
+  margin:0 28px 28px;
+  display:flex; justify-content:space-between; align-items:flex-end;
+}
+.h-monthly-left .label{ font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; opacity:.6; }
+.h-monthly-left .big{ font-size:72px; font-weight:900; letter-spacing:-5px; line-height:.9; }
+.h-monthly-left .unit{ font-size:14px; font-weight:700; opacity:.6; margin-top:4px; }
+.h-monthly-right{ text-align:right; }
+.h-monthly-right .trend{
+  font-size:32px; font-weight:900; letter-spacing:-2px;
+  color:var(--green);
+}
+.h-monthly-right .trend.up{ color:var(--red); }
+.h-monthly-right .trend-label{ font-size:11px; font-weight:700; opacity:.6; text-transform:uppercase; letter-spacing:1px; }
+
+/* Right side grid */
+.hero-right{ display:flex; flex-direction:column; gap:20px; }
+.scope-card{
+  flex:1; border-radius:22px; overflow:hidden;
+  border:3px solid rgba(0,0,0,.5);
+  box-shadow:0 6px 0 rgba(0,0,0,.4);
+  display:flex; flex-direction:column;
+}
+.scope-head{
+  padding:12px 18px;
+  font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.scope-head .scope-num{ font-size:10px; opacity:.5; }
+.scope-body{ padding:18px; flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+.scope-icon{ font-size:28px; margin-bottom:6px; }
+.scope-name{ font-size:18px; font-weight:900; letter-spacing:-1px; }
+.scope-val{ font-size:48px; font-weight:900; letter-spacing:-4px; line-height:.9; margin:8px 0; }
+.scope-val-unit{ font-size:13px; opacity:.6; font-weight:700; }
+.scope-bar-wrap{ background:rgba(0,0,0,.2); border-radius:4px; height:6px; margin-top:10px; overflow:hidden; }
+.scope-bar{ height:100%; border-radius:4px; transition:width 1s ease; }
+.scope-card.mobility{ background:#0A1628; }
+.scope-card.mobility .scope-head{ background:var(--blue); }
+.scope-card.mobility .scope-bar{ background:var(--blue); }
+.scope-card.utilities{ background:#0F1A0F; }
+.scope-card.utilities .scope-head{ background:#00C853; color:var(--black); }
+.scope-card.utilities .scope-bar{ background:#00C853; }
+.scope-card.lifestyle{ background:#1A0A00; }
+.scope-card.lifestyle .scope-head{ background:var(--orange); color:var(--black); }
+.scope-card.lifestyle .scope-bar{ background:var(--orange); }
+
+/* ══════════════════════════════════════════════════
+   TRANSACTION FEED
+══════════════════════════════════════════════════ */
+.feed-section{
+  background:var(--black);
+  padding:40px 36px;
+}
+.section-header{
+  display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px;
+}
+.sec-title{
+  font-size:64px; font-weight:900; letter-spacing:-5px; line-height:.9; text-transform:uppercase;
+}
+.sec-sub{ font-size:14px; opacity:.4; margin-top:6px; }
+.sec-action{
+  padding:10px 22px; background:var(--yellow); color:var(--black);
+  border:none; border-radius:10px; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:11px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase;
+  transition:background .2s;
+}
+.sec-action:hover{ background:#d4de00; }
+.tx-list{ display:flex; flex-direction:column; gap:12px; }
+.tx-item{
+  background:var(--gray); border:2px solid rgba(255,255,255,.06);
+  border-radius:18px; padding:18px 22px;
+  display:flex; align-items:center; gap:18px;
+  transition:border-color .2s, transform .15s;
+  cursor:default;
+}
+.tx-item:hover{ border-color:rgba(239,251,0,.25); transform:translateX(4px); }
+.tx-emoji{ font-size:28px; width:44px; text-align:center; flex-shrink:0; }
+.tx-info{ flex:1; }
+.tx-name{ font-size:15px; font-weight:700; }
+.tx-meta{ font-size:12px; opacity:.4; margin-top:3px; }
+.tx-co2{
+  text-align:right;
+}
+.tx-co2-val{ font-size:22px; font-weight:900; letter-spacing:-1px; }
+.tx-co2-val.low { color:var(--green); }
+.tx-co2-val.mid { color:var(--yellow); }
+.tx-co2-val.high{ color:var(--orange); }
+.tx-co2-val.vhigh{ color:var(--red); }
+.tx-co2-unit{ font-size:11px; opacity:.4; }
+.tx-equiv{ font-size:11px; opacity:.5; margin-top:3px; }
+.tx-offset{
+  padding:9px 16px; border-radius:10px; border:none; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:11px; font-weight:900; letter-spacing:1px; text-transform:uppercase;
+  white-space:nowrap; flex-shrink:0;
+  transition:all .2s;
+}
+.tx-offset.pending{ background:rgba(239,251,0,.1); color:var(--yellow); border:2px solid rgba(239,251,0,.25); }
+.tx-offset.pending:hover{ background:var(--yellow); color:var(--black); }
+.tx-offset.done{ background:rgba(0,200,83,.1); color:var(--green); border:2px solid rgba(0,200,83,.25); cursor:default; }
+
+/* Activity Picker */
+.activity-card{
+  transition: all .2s ease;
+}
+.activity-card:hover{
+  border-color:var(--yellow) !important;
+  background:rgba(239,251,0,.15) !important;
+  transform:translateY(-2px);
+}
+
+.tx-scope-tag{
+  font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  padding:3px 8px; border-radius:5px;
+}
+.tx-scope-tag.s1{ background:rgba(2,102,255,.2); color:#6EA8FF; }
+.tx-scope-tag.s2{ background:rgba(0,200,83,.2); color:#69E8A0; }
+.tx-scope-tag.s3{ background:rgba(255,107,0,.2); color:#FFA357; }
+
+/* ══════════════════════════════════════════════════
+   ANALYTICS SECTION
+══════════════════════════════════════════════════ */
+.analytics-section{
+  background:var(--white); color:var(--black);
+  padding:40px 36px;
+}
+.analytics-section .sec-title{ color:var(--black); }
+.analytics-section .sec-sub{ color:var(--black); }
+.analytics-grid{
+  display:grid;
+  grid-template-columns:1.2fr 1fr 1fr;
+  gap:22px;
+}
+.acell{
+  background:white;
+  border:3px solid var(--black);
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 8px 0 rgba(0,0,0,.15);
+}
+.acell-head{
+  background:var(--black); color:var(--yellow);
+  padding:13px 20px;
+  font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase;
+}
+.acell-head.blue{ background:var(--blue); color:white; }
+.acell-head.green{ background:var(--green); color:var(--black); }
+.acell-body{ padding:24px; }
+
+/* Donut chart */
+.donut-wrap{ display:flex; flex-direction:column; align-items:center; }
+.donut-svg{ width:180px; height:180px; margin:0 auto 16px; }
+.donut-legend{ width:100%; }
+.donut-item{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:7px 0; border-bottom:1px solid rgba(0,0,0,.06);
+  font-size:13px;
+}
+.donut-item:last-child{ border-bottom:none; }
+.donut-dot{
+  width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:8px;
+}
+.donut-label{ display:flex; align-items:center; font-weight:600; }
+.donut-val{ font-weight:900; font-size:14px; }
+
+/* Bar chart */
+.bar-chart{ display:flex; flex-direction:column; gap:14px; }
+.bar-row{}
+.bar-label{
+  display:flex; justify-content:space-between; margin-bottom:6px;
+  font-size:12px; font-weight:700;
+}
+.bar-track{ background:rgba(0,0,0,.08); border-radius:6px; height:10px; overflow:hidden; }
+.bar-fill{ height:100%; border-radius:6px; transition:width 1.2s ease; }
+
+/* Trend chart */
+.trend-chart{
+  display:flex; align-items:flex-end; gap:8px; height:140px;
+  border-bottom:2px solid rgba(0,0,0,.1);
+  padding-bottom:0;
+}
+.trend-bar-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.trend-bar-inner{ width:100%; border-radius:6px 6px 0 0; transition:height 1s ease; }
+.trend-bar-label{ font-size:10px; font-weight:700; opacity:.5; }
+
+/* Hotspot */
+.hotspot-list{ display:flex; flex-direction:column; gap:14px; }
+.hotspot-item{
+  display:flex; gap:14px; align-items:flex-start;
+  padding:14px; background:rgba(0,0,0,.04); border-radius:14px;
+}
+.hotspot-rank{
+  width:28px; height:28px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:900; flex-shrink:0;
+}
+.hotspot-rank.r1{ background:var(--orange); color:white; }
+.hotspot-rank.r2{ background:var(--yellow); color:var(--black); }
+.hotspot-rank.r3{ background:var(--blue); color:white; }
+.hotspot-info{ flex:1; }
+.hotspot-name{ font-size:14px; font-weight:700; }
+.hotspot-val{ font-size:12px; opacity:.5; margin-top:2px; }
+.hotspot-pct{ font-size:22px; font-weight:900; letter-spacing:-1px; }
+
+/* Empathy cards */
+.empathy-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.empathy-card{
+  background:var(--black); color:white;
+  border-radius:16px; padding:20px;
+}
+.empathy-icon{ font-size:28px; margin-bottom:10px; }
+.empathy-quote{ font-size:13px; line-height:1.6; opacity:.8; }
+.empathy-quote strong{ color:var(--yellow); }
+
+/* ══════════════════════════════════════════════════
+   LEADERBOARD
+══════════════════════════════════════════════════ */
+.lb-section{
+  background:var(--black);
+  padding:40px 36px;
+}
+.lb-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:24px; }
+
+.lb-table-wrap{
+  background:var(--gray); border:2px solid rgba(255,255,255,.06);
+  border-radius:22px; overflow:hidden;
+}
+.lb-table-head{
+  background:var(--yellow); color:var(--black);
+  padding:14px 24px;
+  font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase;
+  display:flex; justify-content:space-between;
+}
+.lb-row{
+  display:flex; align-items:center; gap:16px;
+  padding:16px 24px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  transition:background .15s;
+}
+.lb-row:hover{ background:rgba(255,255,255,.03); }
+.lb-row.me{ background:rgba(239,251,0,.06); border-left:3px solid var(--yellow); }
+.lb-pos{ width:28px; font-size:18px; font-weight:900; text-align:center; flex-shrink:0; }
+.lb-pos.gold  { color:#FFD700; }
+.lb-pos.silver{ color:#C0C0C0; }
+.lb-pos.bronze{ color:#CD7F32; }
+.lb-avatar{
+  width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:900; font-size:14px; flex-shrink:0;
+}
+.lb-name{ flex:1; }
+.lb-name .name{ font-size:14px; font-weight:700; }
+.lb-name .city{ font-size:11px; opacity:.4; }
+.lb-co2{ font-size:20px; font-weight:900; letter-spacing:-1px; color:var(--green); }
+.lb-unit{ font-size:11px; opacity:.4; }
+.lb-badge{ font-size:18px; }
+.lb-me-tag{
+  font-size:10px; font-weight:900; letter-spacing:1px; text-transform:uppercase;
+  background:var(--yellow); color:var(--black);
+  padding:2px 7px; border-radius:5px; margin-left:6px;
+}
+
+/* Rank card on right */
+.my-rank-card{
+  background:linear-gradient(135deg, var(--blue) 0%, #003EB5 100%);
+  border-radius:22px; padding:32px;
+  display:flex; flex-direction:column; gap:24px;
+  border:3px solid rgba(0,0,0,.4);
+  box-shadow:0 8px 0 rgba(0,0,0,.4);
+}
+.mrc-title{ font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase; opacity:.6; }
+.mrc-rank{ font-size:80px; font-weight:900; letter-spacing:-6px; line-height:.9; color:var(--yellow); }
+.mrc-sub{ font-size:14px; opacity:.7; }
+.mrc-stats{ display:flex; flex-direction:column; gap:14px; }
+.mrc-stat{
+  display:flex; justify-content:space-between;
+  background:rgba(255,255,255,.08); border-radius:12px; padding:14px 18px;
+}
+.mrc-stat-label{ font-size:12px; font-weight:700; opacity:.6; text-transform:uppercase; letter-spacing:1px; }
+.mrc-stat-val{ font-size:18px; font-weight:900; letter-spacing:-1px; }
+.mrc-next{
+  background:var(--yellow); color:var(--black);
+  border-radius:14px; padding:16px 20px;
+}
+.mrc-next-label{ font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; opacity:.6; }
+.mrc-next-val{ font-size:18px; font-weight:900; letter-spacing:-1px; margin-top:4px; }
+
+/* Weekly challenge */
+.challenge-card{
+  background:var(--gray); border:2px solid rgba(255,255,255,.06);
+  border-radius:22px; overflow:hidden; margin-top:22px;
+}
+.challenge-head{
+  background:var(--blue); padding:14px 24px;
+  font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase;
+}
+.challenge-body{ padding:24px; display:flex; flex-direction:column; gap:14px; }
+.challenge-item{
+  display:flex; gap:14px; align-items:center;
+  background:rgba(255,255,255,.04); border-radius:12px; padding:14px 16px;
+}
+.ch-icon{ font-size:22px; width:36px; text-align:center; flex-shrink:0; }
+.ch-info{ flex:1; }
+.ch-name{ font-size:13px; font-weight:700; }
+.ch-progress-bar{ margin-top:8px; background:rgba(255,255,255,.1); border-radius:4px; height:5px; overflow:hidden; }
+.ch-fill{ height:100%; border-radius:4px; background:var(--green); }
+.ch-pct{ font-size:13px; font-weight:900; color:var(--green); }
+
+/* ══════════════════════════════════════════════════
+   BADGES
+══════════════════════════════════════════════════ */
+.badges-section{
+  background:var(--white); color:var(--black);
+  padding:40px 36px;
+}
+.badges-section .sec-title{ color:var(--black); }
+.badges-section .sec-sub{ color:var(--black); }
+.badges-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  gap:20px;
+}
+.badge-card{
+  background:white; border:3px solid var(--black); border-radius:22px;
+  padding:24px; text-align:center;
+  box-shadow:0 6px 0 rgba(0,0,0,.12);
+  transition:transform .2s, box-shadow .2s;
+  cursor:default;
+}
+.badge-card:hover{ transform:translateY(-4px); box-shadow:0 12px 0 rgba(0,0,0,.12); }
+.badge-card.locked{ opacity:.4; filter:grayscale(1); }
+.badge-icon{ font-size:48px; margin-bottom:12px; }
+.badge-name{ font-size:14px; font-weight:900; letter-spacing:-0.5px; }
+.badge-desc{ font-size:12px; opacity:.5; margin-top:6px; line-height:1.5; }
+.badge-points{
+  display:inline-block; margin-top:12px;
+  background:var(--black); color:var(--yellow);
+  font-size:11px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase;
+  padding:4px 12px; border-radius:20px;
+}
+.badge-card.locked .badge-points{ background:rgba(0,0,0,.15); color:rgba(0,0,0,.4); }
+.badge-earned{
+  display:inline-block; margin-top:8px;
+  font-size:11px; font-weight:700; color:var(--green);
+  letter-spacing:1px; text-transform:uppercase;
+}
+
+/* ══════════════════════════════════════════════════
+   OFFSET / AKSI
+══════════════════════════════════════════════════ */
+.offset-section{
+  background:linear-gradient(135deg,var(--blue) 0%,#003EB5 100%);
+  padding:40px 36px;
+}
+.offset-grid{ display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:32px; }
+.offset-card{
+  background:rgba(255,255,255,.06); backdrop-filter:blur(8px);
+  border:2px solid rgba(255,255,255,.15);
+  border-radius:22px; padding:28px;
+}
+.offset-card.highlight{
+  background:var(--yellow); color:var(--black);
+  border-color:transparent;
+}
+.oc-tag{ font-size:11px; font-weight:900; letter-spacing:2px; text-transform:uppercase; opacity:.6; margin-bottom:12px; }
+.oc-name{ font-size:28px; font-weight:900; letter-spacing:-2px; line-height:1; }
+.oc-desc{ font-size:13px; line-height:1.6; opacity:.7; margin-top:10px; }
+.oc-price{ font-size:48px; font-weight:900; letter-spacing:-4px; margin:16px 0; }
+.oc-unit{ font-size:13px; opacity:.6; }
+.oc-btn{
+  display:block; width:100%; padding:14px;
+  border:none; border-radius:12px; cursor:pointer;
+  font-family:'Space Grotesk',sans-serif;
+  font-size:13px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase;
+  transition:all .2s; margin-top:16px;
+}
+.oc-btn.primary{ background:var(--yellow); color:var(--black); }
+.oc-btn.primary:hover{ background:#d4de00; }
+.oc-btn.secondary{ background:rgba(255,255,255,.1); color:white; border:2px solid rgba(255,255,255,.2); }
+.oc-btn.secondary:hover{ background:rgba(255,255,255,.2); }
+.oc-btn.dark{ background:var(--black); color:var(--yellow); }
+.oc-btn.dark:hover{ background:#111; }
+
+.offset-summary{
+  background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.15);
+  border-radius:22px; padding:28px; margin-top:24px;
+}
+.os-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid rgba(255,255,255,.08); }
+.os-row:last-child{ border-bottom:none; padding-bottom:0; }
+.os-label{ font-size:13px; opacity:.6; }
+.os-val{ font-size:20px; font-weight:900; letter-spacing:-1px; }
+.os-val.green{ color:var(--green); }
+.os-val.yellow{ color:var(--yellow); }
+
+/* ══════════════════════════════════════════════════
+   TOAST NOTIFICATION
+══════════════════════════════════════════════════ */
+.toast{
+  position:fixed; bottom:30px; right:30px; z-index:999;
+  background:var(--black); border:2px solid var(--yellow);
+  border-radius:16px; padding:16px 22px;
+  display:flex; align-items:center; gap:12px;
+  opacity:0; transform:translateY(20px);
+  transition:all .3s;
+  pointer-events:none;
+  max-width:340px;
+}
+.toast.show{ opacity:1; transform:translateY(0); }
+.toast-icon{ font-size:24px; }
+.toast-text{ font-size:13px; line-height:1.5; }
+.toast-text strong{ color:var(--yellow); }
+
+/* ══════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════ */
+.footer{
+  background:var(--black); border-top:3px solid var(--yellow);
+  padding:28px 36px;
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+}
+.footer strong{ color:var(--yellow); }
+.footer-right{ opacity:.4; }
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════ */
+@media(max-width:1100px){
+  .hero-layout{ grid-template-columns:1fr; }
+  .hero-right{ display:grid; grid-template-columns:repeat(3,1fr); }
+  .scope-card{ min-height:auto; }
+  .analytics-grid{ grid-template-columns:1fr 1fr; }
+  .lb-grid{ grid-template-columns:1fr; }
+  .offset-grid{ grid-template-columns:1fr; }
+}
+@media(max-width:780px){
+  .topbar{ padding:0 18px; }
+  .logo{ font-size:28px; }
+  .topbar-center{ display:none; }
+  .h-title{ font-size:64px; letter-spacing:-5px; }
+  .hero{ padding:20px; }
+  .feed-section,.lb-section,.offset-section{ padding:28px 20px; }
+  .analytics-section,.badges-section{ padding:28px 20px; }
+  .sec-title{ font-size:44px; letter-spacing:-3px; }
+  .analytics-grid{ grid-template-columns:1fr; }
+  .hero-right{ grid-template-columns:1fr; }
+  .badges-grid{ grid-template-columns:repeat(2,1fr); }
+  .empathy-grid{ grid-template-columns:1fr; }
+  .footer{ flex-direction:column; gap:8px; text-align:center; }
+  .top-stat{ display:none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     AUTH GATE
+═══════════════════════════════════════════════ -->
+<div class="auth-gate" id="authGate">
+  <div class="auth-box">
+    <div class="auth-box-head">
+      <span><span class="auth-online-dot"></span>NAVIN Carbon OS — Secure Backend</span>
+      <span id="authOnlineStatus" style="font-size:10px;opacity:.7">Mengecek koneksi...</span>
+    </div>
+    <div class="auth-body">
+      <div class="auth-title">MASUK<br>DULU</div>
+      <div class="auth-sub">Data carbon kamu disimpan aman di cloud. Login untuk melihat &amp; sinkronisasi data real-time.</div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Daftar</button>
+      </div>
+
+      <!-- Login -->
+      <div id="formLogin">
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" id="loginEmail" type="email" placeholder="email@kamu.com">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input class="auth-input" id="loginPassword" type="password" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <button class="auth-btn" id="btnLogin" onclick="doLogin()">MASUK →</button>
+        <div class="auth-msg" id="loginMsg"></div>
+      </div>
+
+      <!-- Signup -->
+      <div id="formSignup" style="display:none">
+        <div class="auth-field">
+          <label class="auth-label">Nama Lengkap</label>
+          <input class="auth-input" id="signupName" type="text" placeholder="Nama kamu">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Email</label>
+          <input class="auth-input" id="signupEmail" type="email" placeholder="email@kamu.com">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Password</label>
+          <input class="auth-input" id="signupPassword" type="password" placeholder="Min. 6 karakter"
+            onkeydown="if(event.key==='Enter') doSignup()">
+        </div>
+        <button class="auth-btn" id="btnSignup" onclick="doSignup()">DAFTAR SEKARANG →</button>
+        <div class="auth-msg" id="signupMsg"></div>
+      </div>
+
+      <div class="auth-offline" id="authOffline">
+        ⚠️ Tidak ada koneksi internet. Backend Google Sheets tidak dapat dijangkau.<br>
+        Pastikan kamu online lalu refresh halaman ini.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TOPBAR
+═══════════════════════════════════════════════ -->
+<div class="topbar">
+  <div class="logo">NAVIN<sup>carbon</sup></div>
+  <div class="topbar-center">
+    <button class="tab-btn active" onclick="showTab('dashboard',this)">Dashboard</button>
+    <button class="tab-btn" onclick="showTab('activity',this)">Aktivitas</button>
+    <button class="tab-btn" onclick="showTab('analytics',this)">Analitik</button>
+    <button class="tab-btn" onclick="showTab('leaderboard',this)">Ranking</button>
+    <button class="tab-btn" onclick="showTab('badges',this)">Badges</button>
+    <button class="tab-btn" onclick="showTab('offset',this)">Offset</button>
+  </div>
+  <div class="topbar-right">
+    <div class="top-stat">Bulan Ini <strong id="headerTotal">—</strong> kg</div>
+    <div style="display:flex;align-items:center;gap:10px;position:relative;">
+      <div id="syncIndicator" style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);display:none;">
+        <span id="syncDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#00C853;margin-right:5px;"></span>
+        <span id="syncText">SYNCED</span>
+      </div>
+
+      <!-- Profile Menu Burger -->
+      <div class="avatar" id="topAvatar" onclick="toggleProfileMenu()" style="cursor:pointer;">?</div>
+
+      <!-- Dropdown Menu -->
+      <div id="profileMenu" style="position:absolute;top:50px;right:0;background:rgba(5,5,5,.95);border:2px solid rgba(239,251,0,.2);border-radius:12px;overflow:hidden;min-width:240px;display:none;z-index:1000;box-shadow:0 8px 32px rgba(0,0,0,.6);">
+        <div style="padding:12px 0;border-bottom:1px solid rgba(239,251,0,.1);">
+          <div style="padding:12px 16px;font-size:12px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;">Profil</div>
+          <div style="padding:8px 16px;font-size:14px;font-weight:700;color:var(--yellow);" id="profileName">—</div>
+        </div>
+
+        <button onclick="quickAddCarbon()" style="width:100%;padding:12px 16px;background:transparent;border:none;color:white;text-align:left;cursor:pointer;font-size:13px;font-weight:700;border-bottom:1px solid rgba(239,251,0,.1);transition:background .2s;font-family:'Space Grotesk',sans-serif;">
+          ⚡ Upload Carbon Cepat
+        </button>
+
+        <button onclick="quickUploadBill()" style="width:100%;padding:12px 16px;background:transparent;border:none;color:white;text-align:left;cursor:pointer;font-size:13px;font-weight:700;border-bottom:1px solid rgba(239,251,0,.1);transition:background .2s;font-family:'Space Grotesk',sans-serif;">
+          📸 Upload Bill
+        </button>
+
+        <button onclick="showTab('leaderboard');toggleProfileMenu();" style="width:100%;padding:12px 16px;background:transparent;border:none;color:white;text-align:left;cursor:pointer;font-size:13px;font-weight:700;border-bottom:1px solid rgba(239,251,0,.1);transition:background .2s;font-family:'Space Grotesk',sans-serif;">
+          🏆 Lihat Ranking
+        </button>
+
+        <button onclick="showTab('analytics');toggleProfileMenu();" style="width:100%;padding:12px 16px;background:transparent;border:none;color:white;text-align:left;cursor:pointer;font-size:13px;font-weight:700;border-bottom:1px solid rgba(239,251,0,.1);transition:background .2s;font-family:'Space Grotesk',sans-serif;">
+          📊 Analytics
+        </button>
+
+        <button onclick="confirmLogout()" style="width:100%;padding:12px 16px;background:transparent;border:none;color:#FF3B30;text-align:left;cursor:pointer;font-size:13px;font-weight:700;transition:background .2s;font-family:'Space Grotesk',sans-serif;">
+          🚪 Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     TOAST
+═══════════════════════════════════════════════ -->
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon">🌱</div>
+  <div class="toast-text" id="toastText">Offset berhasil!</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 1 — DASHBOARD
+══════════════════════════════════════════════════════ -->
+<div class="panel-section active" id="tab-dashboard">
+
+  <section class="hero">
+    <div class="hero-layout">
+
+      <!-- Main card -->
+      <div class="pcard hero-main">
+        <div class="pcard-head">Personal Carbon OS — Juni 2026</div>
+        <div class="pcard-body">
+          <div class="h-tag">Your Monthly Footprint</div>
+          <div class="h-title">CARBON<br>FOOT<br>PRINT</div>
+          <div class="h-sub">
+            AI secara otomatis membaca transaksi harianmu dan mengkonversi ke emisi karbon real-time.
+            Tidak perlu input manual — semua berjalan di latar belakang.
+          </div>
+          <div class="h-score">
+            <div class="h-score-item">
+              <div class="h-score-label">Eco Score</div>
+              <div class="h-score-val green">72</div>
+            </div>
+            <div class="h-score-item">
+              <div class="h-score-label">Rank</div>
+              <div class="h-score-val yellow">#14</div>
+            </div>
+            <div class="h-score-item">
+              <div class="h-score-label">Streak</div>
+              <div class="h-score-val orange">7d</div>
+            </div>
+            <div class="h-score-item">
+              <div class="h-score-label">Trees</div>
+              <div class="h-score-val green">36🌳</div>
+            </div>
+          </div>
+        </div>
+        <div class="h-monthly">
+          <div class="h-monthly-left">
+            <div class="label">Total Emisi Juni</div>
+            <div class="big" id="monthlyTotal">9.4</div>
+            <div class="unit">kg CO₂e</div>
+          </div>
+          <div class="h-monthly-right">
+            <div class="trend" id="monthlyTrend">▼ 12%</div>
+            <div class="trend-label">vs Mei 2026</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Scope Cards -->
+      <div class="hero-right">
+
+        <div class="scope-card mobility pcard">
+          <div class="scope-head">
+            <span>Scope 1 → Mobility & Commute</span>
+            <span class="scope-num">DIRECT EMISSION</span>
+          </div>
+          <div class="scope-body">
+            <div class="scope-icon">🚗</div>
+            <div class="scope-name">Mobility &amp; Commute</div>
+            <div>
+              <div class="scope-val" id="s1val">2.4</div>
+              <div class="scope-val-unit">kg CO₂e bulan ini</div>
+            </div>
+            <div>
+              <div style="font-size:12px;opacity:.4;margin-bottom:6px;">25.5% dari total</div>
+              <div class="scope-bar-wrap"><div class="scope-bar" id="s1bar" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="scope-card utilities pcard">
+          <div class="scope-head">
+            <span>Scope 2 → Home Utilities</span>
+            <span class="scope-num">INDIRECT EMISSION</span>
+          </div>
+          <div class="scope-body">
+            <div class="scope-icon">⚡</div>
+            <div class="scope-name">Home Utilities</div>
+            <div>
+              <div class="scope-val" id="s2val">1.8</div>
+              <div class="scope-val-unit">kg CO₂e bulan ini</div>
+            </div>
+            <div>
+              <div style="font-size:12px;opacity:.4;margin-bottom:6px;">19.1% dari total</div>
+              <div class="scope-bar-wrap"><div class="scope-bar" id="s2bar" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="scope-card lifestyle pcard">
+          <div class="scope-head">
+            <span>Scope 3 → Lifestyle</span>
+            <span class="scope-num">SUPPLY CHAIN</span>
+          </div>
+          <div class="scope-body">
+            <div class="scope-icon">🛍️</div>
+            <div class="scope-name">Lifestyle &amp; Consumption</div>
+            <div>
+              <div class="scope-val" id="s3val">5.2</div>
+              <div class="scope-val-unit">kg CO₂e bulan ini</div>
+            </div>
+            <div>
+              <div style="font-size:12px;opacity:.4;margin-bottom:6px;">55.3% dari total</div>
+              <div class="scope-bar-wrap"><div class="scope-bar" id="s3bar" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- AI Hotspot Banner -->
+  <div style="background:#0A0A0A;padding:24px 36px;border-bottom:2px solid rgba(255,255,255,.06)">
+    <div style="max-width:900px;margin:0 auto;display:flex;gap:20px;align-items:stretch;flex-wrap:wrap;">
+      <div style="background:rgba(255,107,0,.1);border:2px solid rgba(255,107,0,.3);border-radius:16px;padding:18px 22px;flex:1;min-width:260px;">
+        <div style="font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--orange);margin-bottom:8px;">🔥 AI Carbon Hotspot</div>
+        <div style="font-size:14px;line-height:1.6;opacity:.85;"><strong style="color:var(--yellow)">70%</strong> emisi bulan ini berasal dari <strong style="color:var(--orange)">belanja ritel online &amp; penerbangan</strong>. Kurangi 1 flight domestik = hemat 850g CO₂e.</div>
+      </div>
+      <div style="background:rgba(0,200,83,.1);border:2px solid rgba(0,200,83,.3);border-radius:16px;padding:18px 22px;flex:1;min-width:260px;">
+        <div style="font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:8px;">💡 Did You Know?</div>
+        <div style="font-size:14px;line-height:1.6;opacity:.85;">Pesanan food delivery hari ini setara daya serap <strong style="color:var(--green)">2 pohon Mangrove selama 1 tahun</strong>. Offset sekarang dengan <strong style="color:var(--yellow)">Rp 3.675</strong>.</div>
+      </div>
+      <div style="background:rgba(2,102,255,.1);border:2px solid rgba(2,102,255,.3);border-radius:16px;padding:18px 22px;flex:1;min-width:260px;">
+        <div style="font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#6EA8FF;margin-bottom:8px;">🎯 Target Bulan Ini</div>
+        <div style="font-size:14px;line-height:1.6;opacity:.85;">Target: <strong style="color:var(--yellow)">8.5 kg</strong>. Kamu masih <strong style="color:var(--red)">0.9 kg</strong> di atas target. Kurangi 2 ride-hailing minggu ini untuk mencapai target.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 2 — AKTIVITAS (TRANSACTION FEED)
+══════════════════════════════════════════════════════ -->
+<div class="panel-section" id="tab-activity">
+<div class="feed-section">
+  <div class="section-header">
+    <div>
+      <div class="sec-title">FEED<br>AKTIVITAS</div>
+      <div class="sec-sub">AI membaca &amp; mengklasifikasi semua transaksimu secara otomatis</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="sec-action" style="background:rgba(255,255,255,.08);color:white;border:2px solid rgba(255,255,255,.15);" onclick="loadUserData()">⟳ REFRESH</button>
+      <button class="sec-action" onclick="addDemoTransaction()">+ SIMULASI AI</button>
+    </div>
+  </div>
+  <!-- Activity Picker + Bill Upload Form -->
+  <div style="background:var(--gray);border:2px solid rgba(239,251,0,.15);border-radius:20px;padding:24px;margin-bottom:24px;">
+    <div style="font-size:16px;font-weight:900;letter-spacing:-1px;margin-bottom:16px;color:var(--yellow);">📤 Upload Aktivitas Carbon</div>
+
+    <!-- Tab: Quick Pick vs Manual -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button class="auth-tab" style="flex:1;background:var(--yellow);color:var(--black);" onclick="switchUploadMode('quick')">⚡ Quick Pick</button>
+      <button class="auth-tab" style="flex:1;background:rgba(239,251,0,.2);color:white;" onclick="switchUploadMode('manual')">📝 Manual Entry</button>
+      <button class="auth-tab" style="flex:1;background:rgba(239,251,0,.2);color:white;" onclick="switchUploadMode('bill')">📸 Upload Bill</button>
+    </div>
+
+    <!-- MODE 1: Quick Activity Picker -->
+    <div id="modeQuick" style="display:block;">
+      <label class="auth-label" style="color:rgba(255,255,255,.5);margin-bottom:8px;">Pilih Aktivitas</label>
+      <input type="text" id="activitySearch" class="auth-input" placeholder="Cari aktivitas... (kopi, mobil, shopping, dll)" style="margin-bottom:12px;" oninput="filterActivities(this.value)">
+      <div id="activityGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:16px;"></div>
+      <div style="background:rgba(239,251,0,.08);border:1px solid rgba(239,251,0,.3);border-radius:12px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:4px;">📊 Estimasi Carbon</div>
+        <div id="selectedActivityInfo" style="font-size:14px;font-weight:700;">Pilih aktivitas untuk lihat estimasi</div>
+      </div>
+    </div>
+
+    <!-- MODE 2: Manual Entry -->
+    <div id="modeManual" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label class="auth-label" style="color:rgba(255,255,255,.5)">Kategori</label>
+          <select class="auth-input" id="upCategory" style="cursor:pointer;">
+            <option value="">Pilih Kategori</option>
+            <option value="Mobility">🚗 Mobility & Commute</option>
+            <option value="Utilities">⚡ Home Utilities</option>
+            <option value="Lifestyle">🛍️ Lifestyle & Consumption</option>
+          </select>
+        </div>
+        <div>
+          <label class="auth-label" style="color:rgba(255,255,255,.5)">Tipe Aktivitas</label>
+          <input class="auth-input" id="upType" type="text" placeholder="misal: Mobil, Listrik, Belanja">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label class="auth-label" style="color:rgba(255,255,255,.5)">Carbon Saved (kg)</label>
+          <input class="auth-input" id="upCarbon" type="number" min="0" step="0.01" placeholder="0.00" oninput="updateCarbonFromManual()">
+        </div>
+        <div>
+          <label class="auth-label" style="color:rgba(255,255,255,.5)">Plastik Dicegah (pcs)</label>
+          <input class="auth-input" id="upPlastic" type="number" min="0" placeholder="0">
+        </div>
+        <div>
+          <label class="auth-label" style="color:rgba(255,255,255,.5)">Hydration (L)</label>
+          <input class="auth-input" id="upHydration" type="number" min="0" step="0.1" placeholder="0.0">
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="auth-label" style="color:rgba(255,255,255,.5)">Catatan</label>
+        <input class="auth-input" id="upNotes" type="text" placeholder="Deskripsi aktivitas...">
+      </div>
+    </div>
+
+    <!-- MODE 3: Bill Upload (Foto Receipt) -->
+    <div id="modeBill" style="display:none;">
+      <label class="auth-label" style="color:rgba(255,255,255,.5);margin-bottom:8px;">📸 Upload Foto Bill / Receipt</label>
+      <div style="border:2px dashed rgba(239,251,0,.4);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:rgba(239,251,0,.04);" onclick="document.getElementById('billFile').click();">
+        <div style="font-size:28px;margin-bottom:8px;">📷</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.6);">Klik untuk upload foto bill / receipt</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;">(JPG, PNG, max 5MB)</div>
+      </div>
+      <input type="file" id="billFile" accept="image/*" style="display:none;" onchange="handleBillUpload(this)">
+      <div id="billPreview" style="margin-top:12px;"></div>
+
+      <label class="auth-label" style="color:rgba(255,255,255,.5);margin-top:16px;margin-bottom:8px;">💰 Nominal Belanja (Rp)</label>
+      <input class="auth-input" id="billAmount" type="number" placeholder="Contoh: 150000" style="margin-bottom:8px;" oninput="calculateCarbonFromBill()">
+
+      <label class="auth-label" style="color:rgba(255,255,255,.5);margin-bottom:4px;">Estimasi Carbon (kg CO₂e)</label>
+      <div style="background:rgba(239,251,0,.15);border:1px solid rgba(239,251,0,.3);border-radius:10px;padding:12px;font-weight:700;font-size:14px;color:var(--yellow);margin-bottom:12px;">
+        <span id="billCarbonEstimate">0.00</span> kg CO₂e
+      </div>
+
+      <label class="auth-label" style="color:rgba(255,255,255,.5);margin-bottom:8px;">Kategori Belanja</label>
+      <select class="auth-input" id="billCategory" style="cursor:pointer;">
+        <option value="">Pilih Kategori</option>
+        <option value="Groceries">🥬 Groceries</option>
+        <option value="Clothing">👕 Pakaian</option>
+        <option value="Electronics">📱 Elektronik</option>
+        <option value="Fuel">⛽ Bahan Bakar</option>
+        <option value="Dining">🍽️ Dining Out</option>
+        <option value="Other">📦 Lainnya</option>
+      </select>
+
+      <div style="margin-top:12px;">
+        <label class="auth-label" style="color:rgba(255,255,255,.5);margin-bottom:4px;">Catatan (opsional)</label>
+        <input class="auth-input" id="billNotes" type="text" placeholder="Misal: Belanja grocery di Indomaret">
+      </div>
+    </div>
+
+    <button id="btnUploadCarbon" class="sec-action" style="width:100%;padding:14px;font-size:13px;margin-top:16px;" onclick="doUploadCarbon()">SIMPAN DATA CARBON →</button>
+  </div>
+
+  <div class="tx-list" id="txList">
+
+    <div class="tx-item" data-id="1">
+      <div class="tx-emoji">✈️</div>
+      <div class="tx-info">
+        <div class="tx-name">Tiket Pesawat Jakarta → Bali</div>
+        <div class="tx-meta">Traveloka · Rp 1.500.000 · Hari ini 09:14 <span class="tx-scope-tag s1">Mobility</span></div>
+      </div>
+      <div class="tx-co2">
+        <div class="tx-co2-val vhigh">850g</div>
+        <div class="tx-co2-unit">CO₂e</div>
+        <div class="tx-equiv">= 4 pohon/tahun</div>
+      </div>
+      <button class="tx-offset pending" onclick="offsetTx(this,'Tiket Pesawat Bali','Rp 12.750')">Offset Rp 12.750</button>
+    </div>
+
+    <div class="tx-item" data-id="2">
+      <div class="tx-emoji">🛍️</div>
+      <div class="tx-info">
+        <div class="tx-name">Belanja Pakaian — Zara</div>
+        <div class="tx-meta">Tokopedia · Rp 850.000 · Hari ini 11:32 <span class="tx-scope-tag s3">Lifestyle</span></div>
+      </div>
+      <div class="tx-co2">
+        <div class="tx-co2-val high">2.1kg</div>
+        <div class="tx-co2-unit">CO₂e</div>
+        <div class="tx-equiv">= 6 Mangrove/tahun</div>
+      </div>
+      <button class="tx-offset pending" onclick="offsetTx(this,'Belanja Pakaian','Rp 31.500')">Offset Rp 31.500</button>
+    </div>
+
+    <div class="tx-item" data-id="3">
+      <div class="tx-emoji">🍱</div>
+      <div class="tx-info">
+        <div class="tx-name">GoFood — Gojek</div>
+        <div class="tx-meta">Gojek · Rp 85.000 · Kemarin 12:45 <span class="tx-scope-tag s3">Lifestyle</span></div>
+      </div>
+      <div class="tx-co2">
+        <div class="tx-co2-val mid">245g</div>
+        <div class="tx-co2-unit">CO₂e</div>
+        <div class="tx-equiv">= 2 Mangrove/tahun</div>
+      </div>
+      <button class="tx-offset pending" onclick="offsetTx(this,'GoFood','Rp 3.675')">Offset Rp 3.675</button>
+    </div>
+
+    <div class="tx-item" data-id="4">
+      <div class="tx-emoji">⚡</div>
+      <div class="tx-info">
+        <div class="tx-name">Tagihan PLN</div>
+        <div class="tx-meta">PLN Mobile · Rp 450.000 · 3 hari lalu <span class="tx-scope-tag s2">Home Utilities</span></div>
+      </div>
+      <div class="tx-co2">
+        <div class="tx-co2-val mid">620g</div>
+        <div class="tx-co2-unit">CO₂e</div>
+        <div class="tx-equiv">= 82 jam AC</div>
+      </div>
+      <button class="tx-offset pending" onclick="offsetTx(this,'Tagihan PLN','Rp 9.300')">Offset Rp 9.300</button>
+    </div>
+
+    <div class="tx-item" data-id="5">
+      <div class="tx-emoji">🚗</div>
+      <div class="tx-info">
+        <div class="tx-name">GrabCar — Senayan ke Sudirman</div>
+        <div class="tx-meta">Grab · Rp 34.000 · 3 hari lalu <span class="tx-scope-tag s1">Mobility</span></div>
+      </div>
+      <div class="tx-co2">
+        <div class="tx-co2-val low">118g</div>
+        <div class="tx-co2-unit">CO₂e</div>
+        <div class="tx-equiv">= 18 mnt AC</div>
+      </div>
+      <button class="tx-offset pending" onclick="offsetTx(this,'GrabCar','Rp 1.770')">Offset Rp 1.770</button>
+    </div>
+
+    <div class="tx-item" data-id="6">
+      <div class="tx-emoji">☕</div>
+      <div class="tx-info">
+        <div class="tx-name">Kopi Kenangan — Matcha Latte</div>
+        <div class="tx-meta">GrabFood · Rp 45.000 · 4 hari lalu <span class="tx-scope-tag s3">Lifestyle</span></div>
+      </div>
+      <div class="tx-co2">
+        <div class="tx-co2-val low">89g</div>
+        <div class="tx-co2-unit">CO₂e</div>
+        <div class="tx-equiv">= 8 mnt TV</div>
+      </div>
+      <button class="tx-offset done">✓ Sudah Offset</button>
+    </div>
+
+    <div class="tx-item" data-id="7">
+      <div class="tx-emoji">🌐</div>
+      <div class="tx-info">
+        <div class="tx-name">Tagihan Indosat Broadband</div>
+        <div class="tx-meta">myIM3 · Rp 200.000 · 5 hari lalu <span class="tx-scope-tag s2">Home Utilities</span></div>
+      </div>
+      <div class="tx-co2">
+        <div class="tx-co2-val low">34g</div>
+        <div class="tx-co2-unit">CO₂e</div>
+        <div class="tx-equiv">= streaming 6 jam</div>
+      </div>
+      <button class="tx-offset done">✓ Sudah Offset</button>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 3 — ANALYTICS
+══════════════════════════════════════════════════════ -->
+<div class="panel-section" id="tab-analytics">
+<div class="analytics-section">
+  <div class="section-header">
+    <div>
+      <div class="sec-title">ANALITIK<br>EMISI</div>
+      <div class="sec-sub">Breakdown visual dari jejak karbon personalmu</div>
+    </div>
+  </div>
+
+  <div class="analytics-grid">
+
+    <!-- Donut chart — Scope breakdown -->
+    <div class="acell">
+      <div class="acell-head">Distribusi per Scope</div>
+      <div class="acell-body">
+        <div class="donut-wrap">
+          <svg class="donut-svg" viewBox="0 0 180 180">
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#eee" stroke-width="28"/>
+            <!-- Scope 3 — orange — 55.3% -->
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#FF6B00" stroke-width="28"
+              stroke-dasharray="242 197" stroke-dashoffset="0" transform="rotate(-90 90 90)"/>
+            <!-- Scope 1 — blue — 25.5% -->
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#0266FF" stroke-width="28"
+              stroke-dasharray="112 327" stroke-dashoffset="-242" transform="rotate(-90 90 90)"/>
+            <!-- Scope 2 — green — 19.1% -->
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#00C853" stroke-width="28"
+              stroke-dasharray="84 355" stroke-dashoffset="-354" transform="rotate(-90 90 90)"/>
+            <text x="90" y="86" text-anchor="middle" font-family="Space Grotesk" font-weight="900" font-size="26" fill="#050505">9.4</text>
+            <text x="90" y="104" text-anchor="middle" font-family="Space Grotesk" font-size="12" fill="#888">kg CO₂e</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="donut-item">
+              <div class="donut-label"><span class="donut-dot" style="background:#FF6B00"></span>Lifestyle</div>
+              <div class="donut-val">5.2 kg <span style="font-size:11px;opacity:.4">55.3%</span></div>
+            </div>
+            <div class="donut-item">
+              <div class="donut-label"><span class="donut-dot" style="background:#0266FF"></span>Mobility</div>
+              <div class="donut-val">2.4 kg <span style="font-size:11px;opacity:.4">25.5%</span></div>
+            </div>
+            <div class="donut-item">
+              <div class="donut-label"><span class="donut-dot" style="background:#00C853"></span>Utilities</div>
+              <div class="donut-val">1.8 kg <span style="font-size:11px;opacity:.4">19.1%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar chart — Sub-kategori -->
+    <div class="acell">
+      <div class="acell-head blue">Top Sumber Emisi</div>
+      <div class="acell-body">
+        <div class="bar-chart">
+          <div class="bar-row">
+            <div class="bar-label"><span>Penerbangan</span><span style="font-weight:900">2.1 kg</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:#FF3B30" data-width="80%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>Belanja Online</span><span style="font-weight:900">1.8 kg</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:#FF6B00" data-width="70%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>Listrik (PLN)</span><span style="font-weight:900">1.6 kg</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:#00C853" data-width="60%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>Food Delivery</span><span style="font-weight:900">1.2 kg</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:#EFFB00" data-width="45%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>Ride Hailing</span><span style="font-weight:900">0.5 kg</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:#0266FF" data-width="20%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span>Lainnya</span><span style="font-weight:900">0.2 kg</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:0%;background:#888" data-width="8%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trend chart — 6 bulan -->
+    <div class="acell">
+      <div class="acell-head green">Tren 6 Bulan</div>
+      <div class="acell-body">
+        <div class="trend-chart" id="trendChart">
+          <!-- diisi JS -->
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;">
+          <span style="font-size:11px;opacity:.4;">Jan</span>
+          <span style="font-size:11px;opacity:.4;">Feb</span>
+          <span style="font-size:11px;opacity:.4;">Mar</span>
+          <span style="font-size:11px;opacity:.4;">Apr</span>
+          <span style="font-size:11px;opacity:.4;">Mei</span>
+          <span style="font-size:11px;color:var(--blue);font-weight:700;">Jun</span>
+        </div>
+        <div style="margin-top:16px;background:rgba(0,0,0,.04);border-radius:12px;padding:14px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:.5;margin-bottom:6px;">Progress Reduksi</div>
+          <div style="font-size:28px;font-weight:900;letter-spacing:-2px;color:var(--green);">−18% <span style="font-size:14px;font-weight:700;letter-spacing:-1px;">sejak Jan 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empathy + Hotspot -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px;">
+
+    <div class="acell">
+      <div class="acell-head">AI Carbon Hotspot</div>
+      <div class="acell-body">
+        <div class="hotspot-list">
+          <div class="hotspot-item">
+            <div class="hotspot-rank r1">1</div>
+            <div class="hotspot-info">
+              <div class="hotspot-name">Fast Fashion &amp; E-Commerce</div>
+              <div class="hotspot-val">Belanja ritel online — rantai pasok global</div>
+            </div>
+            <div class="hotspot-pct" style="color:#FF6B00">38%</div>
+          </div>
+          <div class="hotspot-item">
+            <div class="hotspot-rank r2">2</div>
+            <div class="hotspot-info">
+              <div class="hotspot-name">Penerbangan Domestik</div>
+              <div class="hotspot-val">1 round-trip JKT–BLI = 1.7 kg CO₂e</div>
+            </div>
+            <div class="hotspot-pct" style="color:#EFFB00">22%</div>
+          </div>
+          <div class="hotspot-item">
+            <div class="hotspot-rank r3">3</div>
+            <div class="hotspot-info">
+              <div class="hotspot-name">Konsumsi Listrik Rumah</div>
+              <div class="hotspot-val">PLN masih berbasis batubara 62%</div>
+            </div>
+            <div class="hotspot-pct" style="color:#6EA8FF">17%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="acell">
+      <div class="acell-head">Translasi Empatik</div>
+      <div class="acell-body">
+        <div class="empathy-grid">
+          <div class="empathy-card">
+            <div class="empathy-icon">✈️</div>
+            <div class="empathy-quote">Flight ke Bali setara daya serap <strong>4 pohon Mangrove selama 1 tahun</strong></div>
+          </div>
+          <div class="empathy-card">
+            <div class="empathy-icon">🛍️</div>
+            <div class="empathy-quote">Satu kaos fast fashion = emisi <strong>mengemudi 70 km</strong></div>
+          </div>
+          <div class="empathy-card">
+            <div class="empathy-icon">🍔</div>
+            <div class="empathy-quote">Burger beef sehari setara <strong>AC 4 jam</strong> nonstop</div>
+          </div>
+          <div class="empathy-card">
+            <div class="empathy-icon">📱</div>
+            <div class="empathy-quote">Streaming Netflix 1 jam = <strong>36g CO₂e</strong>, setara 2 km berkendara</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 4 — LEADERBOARD
+══════════════════════════════════════════════════════ -->
+<div class="panel-section" id="tab-leaderboard">
+<div class="lb-section">
+  <div class="section-header">
+    <div>
+      <div class="sec-title">RANKING<br>KOMUNITAS</div>
+      <div class="sec-sub">Top eco warriors — siapa paling rendah karbon?</div>
+    </div>
+  </div>
+
+  <div class="lb-grid">
+
+    <!-- Table -->
+    <div>
+      <div class="lb-table-wrap">
+        <div class="lb-table-head">
+          <span>Eco Warriors — Jakarta</span>
+          <span>Juni 2026</span>
+        </div>
+
+        <div class="lb-row">
+          <div class="lb-pos gold">1</div>
+          <div class="lb-avatar" style="background:#EFFB00;color:#050505">S</div>
+          <div class="lb-name"><div class="name">Sinta R.</div><div class="city">Kemang, Selatan</div></div>
+          <div><div class="lb-co2">6.1</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">🏆</div>
+        </div>
+
+        <div class="lb-row">
+          <div class="lb-pos silver">2</div>
+          <div class="lb-avatar" style="background:#C0C0C0;color:#050505">A</div>
+          <div class="lb-name"><div class="name">Aldi M.</div><div class="city">Depok, Jabar</div></div>
+          <div><div class="lb-co2">6.8</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">🥈</div>
+        </div>
+
+        <div class="lb-row">
+          <div class="lb-pos bronze">3</div>
+          <div class="lb-avatar" style="background:#CD7F32;color:white">R</div>
+          <div class="lb-name"><div class="name">Rizky P.</div><div class="city">Bintaro, Tansel</div></div>
+          <div><div class="lb-co2">7.2</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">🥉</div>
+        </div>
+
+        <div class="lb-row">
+          <div class="lb-pos" style="color:white">4</div>
+          <div class="lb-avatar" style="background:#555;color:white">N</div>
+          <div class="lb-name"><div class="name">Nadia K.</div><div class="city">Menteng, Pusat</div></div>
+          <div><div class="lb-co2">8.1</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">🌿</div>
+        </div>
+
+        <div class="lb-row">
+          <div class="lb-pos" style="color:white">5</div>
+          <div class="lb-avatar" style="background:#666;color:white">F</div>
+          <div class="lb-name"><div class="name">Farhan W.</div><div class="city">BSD, Tangerang</div></div>
+          <div><div class="lb-co2">8.6</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">🌱</div>
+        </div>
+
+        <!-- ME -->
+        <div class="lb-row me">
+          <div class="lb-pos" style="color:var(--yellow)">14</div>
+          <div class="lb-avatar" style="background:var(--yellow);color:#050505">D</div>
+          <div class="lb-name">
+            <div class="name">Devan G. <span class="lb-me-tag">KAMU</span></div>
+            <div class="city">Jakarta Selatan</div>
+          </div>
+          <div><div class="lb-co2">9.4</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">⚡</div>
+        </div>
+
+        <div class="lb-row">
+          <div class="lb-pos" style="color:white">15</div>
+          <div class="lb-avatar" style="background:#444;color:white">B</div>
+          <div class="lb-name"><div class="name">Budi S.</div><div class="city">Cikarang, Bekasi</div></div>
+          <div><div class="lb-co2">9.8</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">🌍</div>
+        </div>
+
+      </div>
+
+      <!-- Weekly challenge -->
+      <div class="challenge-card">
+        <div class="challenge-head">⚡ Weekly Challenge — aktif</div>
+        <div class="challenge-body">
+          <div class="challenge-item">
+            <div class="ch-icon">🚶</div>
+            <div class="ch-info">
+              <div class="ch-name">Jalan kaki 3x minggu ini (ganti ride-hailing)</div>
+              <div class="ch-progress-bar"><div class="ch-fill" style="width:66%"></div></div>
+            </div>
+            <div class="ch-pct">2/3</div>
+          </div>
+          <div class="challenge-item">
+            <div class="ch-icon">🌿</div>
+            <div class="ch-info">
+              <div class="ch-name">Order makanan lokal non-delivery 5x</div>
+              <div class="ch-progress-bar"><div class="ch-fill" style="width:40%"></div></div>
+            </div>
+            <div class="ch-pct">2/5</div>
+          </div>
+          <div class="challenge-item">
+            <div class="ch-icon">⚡</div>
+            <div class="ch-info">
+              <div class="ch-name">Matikan AC saat tidak di rumah selama 3 hari</div>
+              <div class="ch-progress-bar"><div class="ch-fill" style="width:100%"></div></div>
+            </div>
+            <div class="ch-pct" style="color:var(--green)">✓ Done!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My rank card -->
+    <div>
+      <div class="my-rank-card">
+        <div>
+          <div class="mrc-title">Peringkatmu Bulan Ini</div>
+          <div class="mrc-rank">#14</div>
+          <div class="mrc-sub">dari 1.247 eco warriors Jakarta</div>
+        </div>
+        <div class="mrc-stats">
+          <div class="mrc-stat">
+            <span class="mrc-stat-label">Eco Score</span>
+            <span class="mrc-stat-val" style="color:var(--green)">72 / 100</span>
+          </div>
+          <div class="mrc-stat">
+            <span class="mrc-stat-label">Trees Planted</span>
+            <span class="mrc-stat-val" style="color:var(--yellow)">36 🌳</span>
+          </div>
+          <div class="mrc-stat">
+            <span class="mrc-stat-label">Streak</span>
+            <span class="mrc-stat-val" style="color:var(--orange)">7 hari 🔥</span>
+          </div>
+          <div class="mrc-stat">
+            <span class="mrc-stat-label">Total Offset</span>
+            <span class="mrc-stat-val">Rp 66.450</span>
+          </div>
+        </div>
+        <div class="mrc-next">
+          <div class="mrc-next-label">Naik ke #10</div>
+          <div class="mrc-next-val">Kurangi 0.3 kg CO₂e lagi</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 5 — BADGES
+══════════════════════════════════════════════════════ -->
+<div class="panel-section" id="tab-badges">
+<div class="badges-section">
+  <div class="section-header">
+    <div>
+      <div class="sec-title">BADGES &<br>PENCAPAIAN</div>
+      <div class="sec-sub">Kumpulkan semua badge — buktikan dampak lingkunganmu</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:24px;display:flex;gap:12px;flex-wrap:wrap;">
+    <div style="background:var(--black);color:var(--yellow);border:2px solid var(--yellow);border-radius:10px;padding:8px 18px;font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;">8 Terbuka</div>
+    <div style="background:rgba(0,0,0,.08);border:2px solid rgba(0,0,0,.1);border-radius:10px;padding:8px 18px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(0,0,0,.4);">6 Terkunci</div>
+    <div style="background:rgba(0,200,83,.1);color:var(--green);border:2px solid rgba(0,200,83,.3);border-radius:10px;padding:8px 18px;font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;">1 Baru!</div>
+  </div>
+
+  <div class="badges-grid">
+
+    <div class="badge-card">
+      <div class="badge-icon">🌱</div>
+      <div class="badge-name">First Step</div>
+      <div class="badge-desc">Track pertamamu berhasil. Selamat datang di komunitas eco warriors!</div>
+      <div class="badge-points">+100 XP</div>
+      <div class="badge-earned">✓ Earned · Jan 2026</div>
+    </div>
+
+    <div class="badge-card">
+      <div class="badge-icon">🌿</div>
+      <div class="badge-name">7-Day Streak</div>
+      <div class="badge-desc">Login dan track selama 7 hari berturut-turut tanpa putus.</div>
+      <div class="badge-points">+250 XP</div>
+      <div class="badge-earned">✓ Earned · Mar 2026</div>
+    </div>
+
+    <div class="badge-card">
+      <div class="badge-icon">🌳</div>
+      <div class="badge-name">Tree Planter</div>
+      <div class="badge-desc">Berhasil offset karbon setara penanaman 10 pohon Mangrove.</div>
+      <div class="badge-points">+500 XP</div>
+      <div class="badge-earned">✓ Earned · Apr 2026</div>
+    </div>
+
+    <div class="badge-card">
+      <div class="badge-icon">⚡</div>
+      <div class="badge-name">Energy Saver</div>
+      <div class="badge-desc">Emisi listrik turun 20% dalam satu bulan penuh.</div>
+      <div class="badge-points">+400 XP</div>
+      <div class="badge-earned">✓ Earned · Mei 2026</div>
+    </div>
+
+    <div class="badge-card" style="border-color:#EFFB00;box-shadow:0 6px 0 #d4de00;">
+      <div class="badge-icon">🚲</div>
+      <div class="badge-name">Zero Ride Week</div>
+      <div class="badge-desc">Tidak ada ride-hailing selama 1 minggu penuh!</div>
+      <div class="badge-points">+350 XP</div>
+      <div class="badge-earned" style="color:var(--orange);">🆕 Baru Earned!</div>
+    </div>
+
+    <div class="badge-card">
+      <div class="badge-icon">☕</div>
+      <div class="badge-name">Local First</div>
+      <div class="badge-desc">Order dari merchant lokal &gt;5 km 10x dalam satu bulan.</div>
+      <div class="badge-points">+200 XP</div>
+      <div class="badge-earned">✓ Earned · Feb 2026</div>
+    </div>
+
+    <div class="badge-card">
+      <div class="badge-icon">🔌</div>
+      <div class="badge-name">EV Commuter</div>
+      <div class="badge-desc">Gunakan transportasi elektrik 5x dalam seminggu.</div>
+      <div class="badge-points">+450 XP</div>
+      <div class="badge-earned">✓ Earned · Mei 2026</div>
+    </div>
+
+    <div class="badge-card">
+      <div class="badge-icon">💚</div>
+      <div class="badge-name">Top 10 City</div>
+      <div class="badge-desc">Masuk top 10 eco warriors kotamu bulan ini.</div>
+      <div class="badge-points">+800 XP</div>
+      <div class="badge-earned">✓ Earned · Jan 2026</div>
+    </div>
+
+    <!-- LOCKED -->
+    <div class="badge-card locked">
+      <div class="badge-icon">🏔️</div>
+      <div class="badge-name">Net Zero Month</div>
+      <div class="badge-desc">Capai net zero dalam satu bulan kalender penuh.</div>
+      <div class="badge-points">+2000 XP</div>
+    </div>
+
+    <div class="badge-card locked">
+      <div class="badge-icon">🚀</div>
+      <div class="badge-name">Flight Free</div>
+      <div class="badge-desc">Tidak ada penerbangan selama 3 bulan berturut-turut.</div>
+      <div class="badge-points">+1500 XP</div>
+    </div>
+
+    <div class="badge-card locked">
+      <div class="badge-icon">🌏</div>
+      <div class="badge-name">1 Ton Club</div>
+      <div class="badge-desc">Total offset kumulatif mencapai 1 ton CO₂e.</div>
+      <div class="badge-points">+3000 XP</div>
+    </div>
+
+    <div class="badge-card locked">
+      <div class="badge-icon">👑</div>
+      <div class="badge-name">Eco Champion</div>
+      <div class="badge-desc">Peringkat #1 kota selama 1 bulan penuh.</div>
+      <div class="badge-points">+5000 XP</div>
+    </div>
+
+    <div class="badge-card locked">
+      <div class="badge-icon">🌞</div>
+      <div class="badge-name">Solar Switch</div>
+      <div class="badge-desc">Daftarkan rumah ke program energi surya mitra NAVIN.</div>
+      <div class="badge-points">+2500 XP</div>
+    </div>
+
+    <div class="badge-card locked">
+      <div class="badge-icon">🤝</div>
+      <div class="badge-name">Eco Influencer</div>
+      <div class="badge-desc">Ajak 5 teman bergabung dan aktif selama 30 hari.</div>
+      <div class="badge-points">+1000 XP</div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     TAB 6 — OFFSET
+══════════════════════════════════════════════════════ -->
+<div class="panel-section" id="tab-offset">
+<div class="offset-section">
+  <div class="section-header">
+    <div>
+      <div class="sec-title" style="color:white">ONE-CLICK<br>OFFSET</div>
+      <div class="sec-sub" style="color:rgba(255,255,255,.5)">Smart contract otomatis mengeksekusi pembelian kredit karbon ke ekosistem Jejakin</div>
+    </div>
+  </div>
+
+  <div class="offset-grid">
+
+    <div class="offset-card highlight">
+      <div class="oc-tag">🌿 Paling Populer</div>
+      <div class="oc-name">Offset Bulan Ini</div>
+      <div class="oc-desc">Netralisasi seluruh emisi Juni 2026 sekarang. 9.4 kg CO₂e → 36 pohon Mangrove ditanam di Kalimantan.</div>
+      <div class="oc-price">Rp 141K</div>
+      <div class="oc-unit">untuk 9.4 kg CO₂e (Rp 15.000/kg)</div>
+      <button class="oc-btn dark" onclick="doFullOffset()">OFFSET SEKARANG →</button>
+    </div>
+
+    <div class="offset-card">
+      <div class="oc-tag">⚡ Mikro Offset</div>
+      <div class="oc-name">Per Transaksi</div>
+      <div class="oc-desc">Offset langsung di kasir. Tambahkan Rp X saat checkout untuk menetralisir emisi pembelianmu on-the-spot.</div>
+      <div class="oc-price" style="color:var(--yellow)">Rp 1.200+</div>
+      <div class="oc-unit">mulai dari per transaksi</div>
+      <button class="oc-btn secondary" onclick="showTab('activity',null)">LIHAT TRANSAKSI →</button>
+    </div>
+
+    <div class="offset-card">
+      <div class="oc-tag">🌳 Langganan</div>
+      <div class="oc-name">Monthly Auto-Offset</div>
+      <div class="oc-desc">Aktifkan auto-debit bulanan. Setiap akhir bulan, seluruh emisimu otomatis dineutralkan tanpa intervensi manual.</div>
+      <div class="oc-price" style="color:var(--yellow)">Rp 80K–200K</div>
+      <div class="oc-unit">estimasi per bulan</div>
+      <button class="oc-btn secondary" onclick="toast('🔔','Auto-Offset diaktifkan! Setiap akhir bulan emisimu akan otomatis dineutralkan.')">AKTIFKAN AUTO →</button>
+    </div>
+
+    <div class="offset-card">
+      <div class="oc-tag">🎁 Hadiah</div>
+      <div class="oc-name">Offset Gift</div>
+      <div class="oc-desc">Berikan offset karbon sebagai hadiah ulang tahun atau pernikahan. Kirim sertifikat digital dengan nama mereka.</div>
+      <div class="oc-price" style="color:var(--yellow)">Rp 50K–500K</div>
+      <div class="oc-unit">pilih nominal bebas</div>
+      <button class="oc-btn secondary" onclick="toast('🎁','Fitur Gift Offset segera hadir! Daftarkan email untuk early access.')">KIRIM HADIAH →</button>
+    </div>
+
+  </div>
+
+  <!-- Summary -->
+  <div class="offset-summary">
+    <div class="os-row">
+      <span class="os-label">Total emisi Juni 2026</span>
+      <span class="os-val">9.4 kg CO₂e</span>
+    </div>
+    <div class="os-row">
+      <span class="os-label">Sudah di-offset</span>
+      <span class="os-val green" id="offsetDone">1.2 kg CO₂e</span>
+    </div>
+    <div class="os-row">
+      <span class="os-label">Sisa yang perlu di-offset</span>
+      <span class="os-val" style="color:var(--orange)" id="offsetRemain">8.2 kg CO₂e</span>
+    </div>
+    <div class="os-row">
+      <span class="os-label">Biaya untuk full offset</span>
+      <span class="os-val yellow" id="offsetCost">Rp 123.000</span>
+    </div>
+    <div class="os-row">
+      <span class="os-label">Total pohon yang sudah ditanam</span>
+      <span class="os-val green">36 🌳 Mangrove</span>
+    </div>
+    <div class="os-row" style="margin-top:4px;">
+      <span class="os-label">Lokasi reforestasi</span>
+      <span class="os-val" style="font-size:14px;opacity:.8">Kalimantan Tengah via Jejakin</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div>NAVIN <strong>CARBON OS</strong> © 2026</div>
+  <div class="footer-right">POWERED BY AI · SMART CONTRACT · JEJAKIN ECOSYSTEM</div>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   CONFIG
+   Ganti URL ini setelah deploy Google Apps Script
+   Panduan: buka NAVIN_SETUP.txt di folder Downloads
+═══════════════════════════════════════════════════════════════ */
+const API_URL = 'https://script.google.com/macros/s/AKfycby-fxrDhMVd0jx6m6UmNnyCIxhSDIiVB6BTW_iENDgcuZ-3svHTgsxKe9vxwwCbjU33OQ/exec';
+
+/* ═══════════════════════════════════════════════
+   SESSION
+═══════════════════════════════════════════════ */
+function getSession()  { try { return JSON.parse(localStorage.getItem('navin_session') || 'null'); } catch(e){ return null; } }
+function saveSession(s){ localStorage.setItem('navin_session', JSON.stringify(s)); }
+function clearSession(){ localStorage.removeItem('navin_session'); }
+
+/* ═══════════════════════════════════════════════
+   API
+═══════════════════════════════════════════════ */
+async function apiCall(body) {
+  if (API_URL === 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE') {
+    return mockApi(body);
+  }
+  const url = API_URL + '?payload=' + encodeURIComponent(JSON.stringify(body));
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Response bukan JSON: ' + text.substring(0,100)); }
+}
+
+/* Demo mock — aktif saat API_URL belum dikonfigurasi */
+const MOCK_DB = { users:[], carbon:[] };
+function mockApi(body) {
+  const { action } = body;
+  if (action === 'signup') {
+    if (MOCK_DB.users.find(u => u.email === body.email.toLowerCase()))
+      return { success:false, message:'Email sudah terdaftar.' };
+    const user = { userId:'USR_'+Math.random().toString(36).slice(2,8).toUpperCase(), email:body.email.toLowerCase(), name:body.name, joinDate:new Date().toISOString() };
+    MOCK_DB.users.push(user);
+    const token = btoa(user.userId+':demo');
+    return { success:true, ...user, token };
+  }
+  if (action === 'login') {
+    const u = MOCK_DB.users.find(u => u.email === body.email.toLowerCase());
+    if (!u) return { success:false, message:'Email tidak ditemukan. Coba daftar dulu.' };
+    const token = btoa(u.userId+':demo');
+    return { success:true, ...u, token };
+  }
+  if (action === 'uploadCarbon') {
+    MOCK_DB.carbon.push({ ...body, timestamp: new Date().toISOString() });
+    return { success:true, message:'Data tersimpan (mode demo lokal).' };
+  }
+  if (action === 'getMyData') {
+    const records = MOCK_DB.carbon.filter(r => r.userId === body.userId);
+    const totals = records.reduce((acc,r) => ({
+      carbon: acc.carbon + (parseFloat(r.carbonSaved)||0),
+      plastic: acc.plastic + (parseInt(r.plasticPrevented)||0),
+      hydration: acc.hydration + (parseFloat(r.hydration)||0)
+    }), { carbon:0, plastic:0, hydration:0 });
+    return { success:true, records, totals };
+  }
+  return { success:false, message:'Unknown action' };
+}
+
+/* ═══════════════════════════════════════════════
+   ONLINE CHECK
+═══════════════════════════════════════════════ */
+function checkOnline() {
+  const online = navigator.onLine;
+  const statusEl = document.getElementById('authOnlineStatus');
+  const offlineEl = document.getElementById('authOffline');
+  const syncEl = document.getElementById('syncIndicator');
+  if (statusEl) statusEl.textContent = online ? '🟢 Online' : '🔴 Offline';
+  if (offlineEl) offlineEl.classList.toggle('show', !online && API_URL !== 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE');
+  if (syncEl && getSession()) {
+    syncEl.style.display = 'flex';
+    document.getElementById('syncDot').style.background = online ? '#00C853' : '#FF3B30';
+    document.getElementById('syncText').textContent = online ? 'SYNCED' : 'OFFLINE';
+  }
+}
+window.addEventListener('online',  checkOnline);
+window.addEventListener('offline', checkOnline);
+
+/* ═══════════════════════════════════════════════
+   AUTH GATE UI
+═══════════════════════════════════════════════ */
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('formLogin').style.display  = isLogin ? '' : 'none';
+  document.getElementById('formSignup').style.display = isLogin ? 'none' : '';
+  document.getElementById('loginMsg').textContent  = '';
+  document.getElementById('signupMsg').textContent = '';
+}
+
+function setAuthMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.innerHTML  = text;
+  el.className  = 'auth-msg ' + (type || '');
+}
+
+function setAuthBtn(id, loading, label) {
+  const btn = document.getElementById(id);
+  btn.disabled     = loading;
+  btn.textContent  = loading ? 'Memproses...' : label;
+}
+
+/* ═══════════════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════════════ */
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) return setAuthMsg('loginMsg','Isi email dan password dulu.','err');
+
+  setAuthBtn('btnLogin', true, 'MASUK →');
+  setAuthMsg('loginMsg','','');
+
+  try {
+    const data = await apiCall({ action:'login', email, password });
+    if (data.success) {
+      saveSession({ token:data.token, userId:data.userId, name:data.name, email:data.email, joinDate:data.joinDate });
+      openApp();
+    } else {
+      setAuthMsg('loginMsg', data.message, 'err');
+    }
+  } catch(e) {
+    setAuthMsg('loginMsg', 'Gagal terhubung ke server. Cek koneksi internet.', 'err');
+  }
+  setAuthBtn('btnLogin', false, 'MASUK →');
+}
+
+/* ═══════════════════════════════════════════════
+   SIGNUP
+═══════════════════════════════════════════════ */
+async function doSignup() {
+  const name     = document.getElementById('signupName').value.trim();
+  const email    = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  if (!name || !email || !password) return setAuthMsg('signupMsg','Semua field wajib diisi.','err');
+  if (password.length < 6) return setAuthMsg('signupMsg','Password minimal 6 karakter.','err');
+
+  setAuthBtn('btnSignup', true, 'DAFTAR SEKARANG →');
+  setAuthMsg('signupMsg','','');
+
+  try {
+    const data = await apiCall({ action:'signup', name, email, password });
+    if (data.success) {
+      setAuthMsg('signupMsg', '✓ Akun dibuat! Membuka dashboard...', 'ok');
+      saveSession({ token:data.token, userId:data.userId, name:data.name, email:data.email, joinDate:data.joinDate });
+      setTimeout(openApp, 800);
+    } else {
+      setAuthMsg('signupMsg', data.message, 'err');
+    }
+  } catch(e) {
+    setAuthMsg('signupMsg', 'Gagal terhubung ke server. Cek koneksi internet.', 'err');
+  }
+  setAuthBtn('btnSignup', false, 'DAFTAR SEKARANG →');
+}
+
+/* ═══════════════════════════════════════════════
+   OPEN APP (setelah auth berhasil)
+═══════════════════════════════════════════════ */
+async function openApp() {
+  const session = getSession();
+  if (!session) return;
+
+  // update topbar
+  document.getElementById('topAvatar').textContent    = session.name[0].toUpperCase();
+  document.getElementById('topAvatar').title          = session.name + ' — klik menu';
+  document.getElementById('profileName').textContent  = session.name;
+  document.getElementById('syncIndicator').style.display = 'flex';
+
+  // sembunyikan auth gate
+  document.getElementById('authGate').classList.add('hidden');
+
+  // init dashboard
+  initBars();
+  initActivityPicker();
+  await loadUserData();
+
+  setTimeout(() => {
+    const isDemo = API_URL === 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE';
+    toast('👋', isDemo
+      ? `Halo <strong>${session.name.split(' ')[0]}</strong>! Mode demo aktif — pasang API URL untuk sync ke Google Sheets.`
+      : `Halo <strong>${session.name.split(' ')[0]}</strong>! Data kamu sudah disinkronisasi dari cloud.`
+    );
+  }, 400);
+
+  // auto-refresh setiap 60 detik saat online
+  setInterval(() => { if (navigator.onLine && API_URL !== 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE') loadUserData(true); }, 60000);
+}
+
+/* ═══════════════════════════════════════════════
+   LOAD USER DATA FROM SHEETS
+═══════════════════════════════════════════════ */
+async function loadUserData(silent = false) {
+  const session = getSession();
+  if (!session) return;
+
+  setSyncState('syncing');
+  try {
+    const data = await apiCall({ action:'getMyData', token:session.token, userId:session.userId, email:session.email });
+    if (data.success) {
+      renderDashboard(data.totals, data.records);
+      if (!silent) renderActivityFeed(data.records);
+      setSyncState('synced');
+    }
+  } catch(e) {
+    setSyncState('offline');
+    if (!silent) console.warn('Data load failed:', e.message);
+  }
+}
+
+function setSyncState(state) {
+  const dot  = document.getElementById('syncDot');
+  const text = document.getElementById('syncText');
+  if (!dot) return;
+  if (state === 'syncing') { dot.style.background='#EFFB00'; text.textContent='SYNCING...'; }
+  if (state === 'synced')  { dot.style.background='#00C853'; text.textContent='SYNCED'; }
+  if (state === 'offline') { dot.style.background='#FF3B30'; text.textContent='OFFLINE'; }
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER DASHBOARD dengan data real
+═══════════════════════════════════════════════ */
+function renderDashboard(totals, records) {
+  const carbon    = totals.carbon    || 0;
+  const plastic   = totals.plastic   || 0;
+  const hydration = totals.hydration || 0;
+  const total     = carbon;
+
+  document.getElementById('headerTotal').textContent  = total.toFixed(1);
+  document.getElementById('monthlyTotal').textContent = total.toFixed(1);
+
+  // scope breakdown dari records
+  let s1=0, s2=0, s3=0;
+  records.forEach(r => {
+    const t = (r.activityType||'').toLowerCase();
+    const v = parseFloat(r.carbonSaved)||0;
+    if (t.includes('mobility') || t.includes('flight') || t.includes('ride') || t.includes('commute')) s1+=v;
+    else if (t.includes('utilities') || t.includes('listrik') || t.includes('internet') || t.includes('home')) s2+=v;
+    else s3+=v;
+  });
+  if (s1+s2+s3 === 0) { s1=2.4; s2=1.8; s3=5.2; } // fallback demo saat belum ada data
+
+  const totalScope = s1+s2+s3 || 1;
+  document.getElementById('s1val').textContent = s1.toFixed(1);
+  document.getElementById('s2val').textContent = s2.toFixed(1);
+  document.getElementById('s3val').textContent = s3.toFixed(1);
+
+  setTimeout(() => {
+    document.getElementById('s1bar').style.width = Math.round(s1/totalScope*100)+'%';
+    document.getElementById('s2bar').style.width = Math.round(s2/totalScope*100)+'%';
+    document.getElementById('s3bar').style.width = Math.round(s3/totalScope*100)+'%';
+  }, 200);
+
+  // offset stats
+  totalOffsetKg = 0;
+  document.getElementById('offsetDone').textContent   = '0.0 kg CO₂e';
+  document.getElementById('offsetRemain').textContent = total.toFixed(1)+' kg CO₂e';
+  document.getElementById('offsetCost').textContent   = 'Rp '+Math.round(total*15000).toLocaleString('id-ID');
+
+  // trend indicator
+  const trendEl = document.getElementById('monthlyTrend');
+  if (total < 10) { trendEl.textContent='▼ '+Math.round((10.6-total)/10.6*100)+'%'; trendEl.style.color='#00C853'; }
+  else { trendEl.textContent='▲ '+Math.round((total-10.6)/10.6*100)+'%'; trendEl.style.color='var(--red)'; trendEl.classList.add('up'); }
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER ACTIVITY FEED dari records Sheets
+═══════════════════════════════════════════════ */
+const CATEGORY_MAP = {
+  flight:'✈️', penerbangan:'✈️', mobility:'🚗', ride:'🚗', grab:'🚗', gojek:'🛵',
+  food:'🍱', makanan:'🍱', belanja:'🛍️', lifestyle:'🛍️', shopee:'🛍️', tokopedia:'🛍️',
+  listrik:'⚡', pln:'⚡', utilities:'⚡', internet:'🌐', home:'🏠',
+  kopi:'☕', coffee:'☕', manual:'📝'
+};
+function getEmoji(type) {
+  if (!type) return '📝';
+  const t = type.toLowerCase();
+  for (const [k,v] of Object.entries(CATEGORY_MAP)) if (t.includes(k)) return v;
+  return '📝';
+}
+function getScopeTag(type) {
+  const t = (type||'').toLowerCase();
+  if (t.includes('mobility')||t.includes('flight')||t.includes('ride')||t.includes('commute')) return '<span class="tx-scope-tag s1">Mobility</span>';
+  if (t.includes('utilities')||t.includes('listrik')||t.includes('internet')||t.includes('home')) return '<span class="tx-scope-tag s2">Utilities</span>';
+  return '<span class="tx-scope-tag s3">Lifestyle</span>';
+}
+function getCO2Class(kg) {
+  if (kg < 0.15) return 'low';
+  if (kg < 0.5)  return 'mid';
+  if (kg < 1.5)  return 'high';
+  return 'vhigh';
+}
+function formatCO2(kg) {
+  return kg >= 1 ? kg.toFixed(1)+'kg' : Math.round(kg*1000)+'g';
+}
+
+function renderActivityFeed(records) {
+  const list = document.getElementById('txList');
+  if (!records || records.length === 0) {
+    list.innerHTML = `
+      <div style="text-align:center;padding:48px;opacity:.3;">
+        <div style="font-size:48px;margin-bottom:12px;">📊</div>
+        <div style="font-size:16px;font-weight:700;">Belum ada data aktivitas</div>
+        <div style="font-size:13px;margin-top:6px;">Upload carbon activity pertamamu di atas</div>
+      </div>`;
+    return;
+  }
+
+  const sorted = [...records].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+  list.innerHTML = sorted.map(r => {
+    const kg     = parseFloat(r.carbonSaved) || 0;
+    const equiv  = kg > 0 ? `= ${Math.round(kg/0.0027)} mnt pohon` : '—';
+    const price  = 'Rp '+Math.round(kg*15000).toLocaleString('id-ID');
+    const date   = new Date(r.timestamp).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="tx-item">
+        <div class="tx-emoji">${getEmoji(r.activityType)}</div>
+        <div class="tx-info">
+          <div class="tx-name">${r.activityType || 'Aktivitas Carbon'}</div>
+          <div class="tx-meta">${date} ${getScopeTag(r.activityType)} ${r.notes ? '· '+r.notes : ''}</div>
+        </div>
+        <div class="tx-co2">
+          <div class="tx-co2-val ${getCO2Class(kg)}">${formatCO2(kg)}</div>
+          <div class="tx-co2-unit">CO₂e</div>
+          <div class="tx-equiv">${equiv}</div>
+        </div>
+        <button class="tx-offset pending" onclick="offsetTxSave(this,'${r.activityType||'Aktivitas'}','${price}',${kg})">Offset ${price}</button>
+      </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   RENDER LEADERBOARD
+═══════════════════════════════════════════════ */
+async function renderLeaderboard() {
+  const session = getSession();
+  if (!session) return;
+
+  try {
+    const res = await apiCall({ action:'getLeaderboard', token:session.token, userId:session.userId });
+    if (!res.success) return toast('⚠️','Gagal load leaderboard.');
+
+    const lb = res.leaderboard || [];
+    const myRank = res.myRank || null;
+    const myData = res.myData || null;
+
+    const tableWrap = document.querySelector('.lb-table-wrap');
+    if (!tableWrap) return;
+
+    // Generate top 10 rows
+    let html = `
+      <div class="lb-table-head">
+        <span>Eco Warriors — NAVIN</span>
+        <span>Juni 2026</span>
+      </div>`;
+
+    lb.forEach((user, idx) => {
+      const pos = idx + 1;
+      let posClass = '';
+      let medal = '';
+      if (pos === 1) { posClass = 'gold'; medal = '🏆'; }
+      else if (pos === 2) { posClass = 'silver'; medal = '🥈'; }
+      else if (pos === 3) { posClass = 'bronze'; medal = '🥉'; }
+      else { medal = idx < 10 ? '🌱' : ''; }
+
+      const avatar = user.name[0].toUpperCase();
+      html += `
+        <div class="lb-row">
+          <div class="lb-pos ${posClass}">${pos}</div>
+          <div class="lb-avatar" style="background:${getColorByRank(pos)}">${avatar}</div>
+          <div class="lb-name">
+            <div class="name">${user.name}</div>
+            <div class="city">${user.email}</div>
+          </div>
+          <div><div class="lb-co2">${user.carbon.toFixed(1)}</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">${medal}</div>
+        </div>`;
+    });
+
+    // My position
+    if (myRank && myData) {
+      html += `
+        <div class="lb-row me">
+          <div class="lb-pos" style="color:var(--yellow)">${myRank}</div>
+          <div class="lb-avatar" style="background:var(--yellow);color:#050505">${myData.name[0].toUpperCase()}</div>
+          <div class="lb-name">
+            <div class="name">${myData.name} <span class="lb-me-tag">KAMU</span></div>
+            <div class="city">${myData.email}</div>
+          </div>
+          <div><div class="lb-co2">${myData.carbon.toFixed(1)}</div><div class="lb-unit">kg CO₂e</div></div>
+          <div class="lb-badge">⚡</div>
+        </div>`;
+    }
+
+    tableWrap.innerHTML = html;
+  } catch(e) {
+    console.error('Leaderboard error:', e);
+  }
+}
+
+function getColorByRank(pos) {
+  const colors = ['#EFFB00','#C0C0C0','#CD7F32','#555','#666','#777','#888','#999','#AAA','#BBB'];
+  return colors[Math.min(pos-1, colors.length-1)];
+}
+
+/* ═══════════════════════════════════════════════
+   OFFSET + SIMPAN KE SHEETS
+═══════════════════════════════════════════════ */
+let totalOffsetKg = 0;
+async function offsetTxSave(btn, name, price, kg) {
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const session = getSession();
+  try {
+    await apiCall({ action:'uploadCarbon', token:session.token, userId:session.userId, email:session.email,
+      carbonSaved:0, plasticPrevented:0, hydration:0, activityType:'Offset: '+name, notes:'Smart contract offset via Jejakin' });
+    btn.className   = 'tx-offset done';
+    btn.textContent = '✓ Sudah Offset';
+    btn.onclick     = null;
+    toast('🌱', `<strong>${name}</strong> di-offset (${price}). Kredit karbon → Jejakin! 🌳`);
+    totalOffsetKg += kg;
+    const remain = Math.max(0, (parseFloat(document.getElementById('monthlyTotal').textContent)||0) - totalOffsetKg);
+    document.getElementById('offsetDone').textContent   = totalOffsetKg.toFixed(1)+' kg CO₂e';
+    document.getElementById('offsetRemain').textContent = remain.toFixed(1)+' kg CO₂e';
+    document.getElementById('offsetCost').textContent   = 'Rp '+Math.round(remain*15000).toLocaleString('id-ID');
+  } catch(e) {
+    btn.disabled=false; btn.textContent='Offset '+price;
+    toast('⚠️','Gagal simpan offset. Cek koneksi internet.');
+  }
+}
+
+/* Tetap support demo transaction buttons (hardcoded) */
+function offsetTx(btn, name, price) {
+  offsetTxSave(btn, name, price, parseInt(price.replace(/[^0-9]/g,''))/15000);
+}
+
+/* ═══════════════════════════════════════════════
+   ACTIVITY DATABASE & PICKER
+═══════════════════════════════════════════════ */
+const ACTIVITIES = [
+  // Mobility
+  {icon:'🚗',name:'Naik Mobil (per km)',estimate:0.25,category:'Mobility'},
+  {icon:'🏍️',name:'Naik Motor (per km)',estimate:0.15,category:'Mobility'},
+  {icon:'🚲',name:'Naik Sepeda (per km)',estimate:0,category:'Mobility'},
+  {icon:'🚌',name:'Naik Bus (per km)',estimate:0.08,category:'Mobility'},
+  {icon:'✈️',name:'Terbang (per km)',estimate:0.25,category:'Mobility'},
+  {icon:'🚂',name:'Naik Kereta (per km)',estimate:0.05,category:'Mobility'},
+  // Utilities
+  {icon:'💡',name:'Listrik Rumah (kWh)',estimate:0.6,category:'Utilities'},
+  {icon:'💧',name:'Air PAM (L)',estimate:0.001,category:'Utilities'},
+  {icon:'🔥',name:'Gas Elpiji (per botol)',estimate:2.3,category:'Utilities'},
+  // Lifestyle & Food
+  {icon:'☕',name:'Kopi Amerikano',estimate:0.5,category:'Lifestyle'},
+  {icon:'🍕',name:'Pizza (1 slice)',estimate:2.0,category:'Lifestyle'},
+  {icon:'🍔',name:'Burger',estimate:2.5,category:'Lifestyle'},
+  {icon:'🍜',name:'Mie Instan',estimate:0.3,category:'Lifestyle'},
+  {icon:'🥗',name:'Salad Sayuran',estimate:0.2,category:'Lifestyle'},
+  {icon:'🐟',name:'Ikan (per porsi)',estimate:2.8,category:'Lifestyle'},
+  {icon:'🥩',name:'Daging Sapi (per porsi)',estimate:15,category:'Lifestyle'},
+  {icon:'🧈',name:'Susu (1 gelas)',estimate:1.0,category:'Lifestyle'},
+  // Shopping
+  {icon:'👕',name:'Beli Pakaian (1 item)',estimate:10,category:'Lifestyle'},
+  {icon:'👞',name:'Beli Sepatu (1 pasang)',estimate:12,category:'Lifestyle'},
+  {icon:'🎒',name:'Beli Tas',estimate:8,category:'Lifestyle'},
+  {icon:'📱',name:'Beli Smartphone',estimate:50,category:'Lifestyle'},
+  {icon:'💻',name:'Beli Laptop',estimate:200,category:'Lifestyle'},
+  {icon:'🛋️',name:'Beli Furniture',estimate:100,category:'Lifestyle'},
+  // Actions
+  {icon:'🌱',name:'Tanam Pohon',estimate:-21,category:'Mobility'},
+  {icon:'♻️',name:'Recycling (per kg)',estimate:-0.5,category:'Lifestyle'},
+  {icon:'🌍',name:'Donasi Lingkungan',estimate:-5,category:'Lifestyle'},
+];
+
+let selectedActivity = null;
+
+function initActivityPicker() {
+  const grid = document.getElementById('activityGrid');
+  if(!grid) return;
+  grid.innerHTML = ACTIVITIES.map((a,i) => `
+    <div onclick="selectActivity(${i})" style="background:rgba(239,251,0,.08);border:2px solid rgba(239,251,0,.15);border-radius:10px;padding:12px;cursor:pointer;text-align:center;transition:all .2s;"
+         class="activity-card" data-index="${i}" data-name="${a.name.toLowerCase()}">
+      <div style="font-size:24px;margin-bottom:4px;">${a.icon}</div>
+      <div style="font-size:11px;font-weight:700;line-height:1.3;">${a.name}</div>
+    </div>
+  `).join('');
+}
+
+function filterActivities(q) {
+  const cards = document.querySelectorAll('.activity-card');
+  cards.forEach(c => {
+    c.style.display = c.dataset.name.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function selectActivity(idx) {
+  selectedActivity = ACTIVITIES[idx];
+  document.querySelectorAll('.activity-card').forEach(c => c.style.borderColor='rgba(239,251,0,.15)');
+  document.querySelector(`[data-index="${idx}"]`).style.borderColor='var(--yellow)';
+
+  document.getElementById('upType').value = selectedActivity.name;
+  document.getElementById('upCarbon').value = selectedActivity.estimate;
+  document.getElementById('upCategory').value = selectedActivity.category;
+  document.getElementById('selectedActivityInfo').textContent =
+    `${selectedActivity.icon} ${selectedActivity.name} → ${selectedActivity.estimate} kg CO₂e`;
+}
+
+/* ═══════════════════════════════════════════════
+   PROFILE MENU & QUICK ACTIONS
+═══════════════════════════════════════════════ */
+function toggleProfileMenu() {
+  const menu = document.getElementById('profileMenu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function quickAddCarbon() {
+  toggleProfileMenu();
+  showTab('activity');
+  setTimeout(() => {
+    switchUploadMode('quick');
+    document.getElementById('activitySearch').focus();
+    window.scrollTo(0, 0);
+  }, 100);
+}
+
+function quickUploadBill() {
+  toggleProfileMenu();
+  showTab('activity');
+  setTimeout(() => {
+    switchUploadMode('bill');
+    document.getElementById('billFile').click();
+    window.scrollTo(0, 0);
+  }, 100);
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('profileMenu');
+  const avatar = document.getElementById('topAvatar');
+  if (menu && avatar && !menu.contains(e.target) && !avatar.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+function switchUploadMode(mode) {
+  document.getElementById('modeQuick').style.display = mode==='quick' ? 'block' : 'none';
+  document.getElementById('modeManual').style.display = mode==='manual' ? 'block' : 'none';
+  document.getElementById('modeBill').style.display = mode==='bill' ? 'block' : 'none';
+
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    const modes = ['quick','manual','bill'];
+    t.style.background = modes[i]===mode ? 'var(--yellow)' : 'rgba(239,251,0,.2)';
+    t.style.color = modes[i]===mode ? 'var(--black)' : 'white';
+  });
+
+  if(mode==='quick') initActivityPicker();
+}
+
+function updateCarbonFromManual() {
+  const c = parseFloat(document.getElementById('upCarbon').value) || 0;
+  if(c > 0) {
+    const equiv = `= ${Math.round(c/0.0027)} mnt pohon`;
+    document.getElementById('selectedActivityInfo').textContent = `${c} kg CO₂e ${equiv}`;
+  }
+}
+
+function handleBillUpload(input) {
+  const file = input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const preview = document.getElementById('billPreview');
+    const img = document.createElement('img');
+    img.src = e.target.result;
+    img.style.cssText = 'max-width:100%;height:auto;border-radius:10px;margin-bottom:12px;';
+    preview.innerHTML = '';
+    preview.appendChild(img);
+
+    // Store base64 untuk upload
+    window.billImageData = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function calculateCarbonFromBill() {
+  const amount = parseFloat(document.getElementById('billAmount').value) || 0;
+  // Estimasi: Rp 1000 = 0.067 kg CO2e (berdasarkan rata2 consumption)
+  const carbon = amount * 0.00006674;
+  document.getElementById('billCarbonEstimate').textContent = carbon.toFixed(2);
+  document.getElementById('upCarbon').value = carbon.toFixed(2);
+}
+
+/* ═══════════════════════════════════════════════
+   UPLOAD CARBON — simpan ke Sheets
+═══════════════════════════════════════════════ */
+async function doUploadCarbon() {
+  const session = getSession();
+  if (!session) return toast('⚠️','Login dulu sebelum upload data.');
+
+  // Detect mode
+  const modeQuick = document.getElementById('modeQuick');
+  const isBillMode = modeQuick && window.getComputedStyle(modeQuick).display === 'none' &&
+                     document.getElementById('modeBill')?.style.display !== 'none';
+
+  let type, carbon, plastic, hydration, notes;
+
+  if (isBillMode) {
+    // Bill Mode
+    if (!window.billImageData) return toast('⚠️','Upload foto bill terlebih dahulu.');
+    const amount = parseFloat(document.getElementById('billAmount')?.value) || 0;
+    if (amount <= 0) return toast('⚠️','Masukkan nominal belanja.');
+
+    type = document.getElementById('billCategory')?.value || 'Lifestyle';
+    carbon = parseFloat(document.getElementById('billCarbonEstimate')?.textContent) || 0;
+    plastic = 0;
+    hydration = 0;
+    notes = (document.getElementById('billNotes')?.value || '').trim();
+    const billType = document.getElementById('billCategory')?.value;
+    notes = `[Bill] Rp ${amount.toLocaleString('id-ID')} · ${billType}${notes ? ' · '+notes : ''}`;
+
+    // Compress image untuk storage
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 300, maxH = 300;
+      let w = img.width, h = img.height;
+      if(w > h) { h *= maxW / w; w = maxW; } else { w *= maxH / h; h = maxH; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      window.billImageData = canvas.toDataURL('image/jpeg', 0.7);
+    };
+    img.src = window.billImageData;
+  } else {
+    // Quick Pick atau Manual Mode
+    type      = document.getElementById('upType')?.value.trim()     || 'Manual';
+    carbon    = parseFloat(document.getElementById('upCarbon')?.value)    || 0;
+    plastic   = parseInt(document.getElementById('upPlastic')?.value)     || 0;
+    hydration = parseFloat(document.getElementById('upHydration')?.value) || 0;
+    notes     = document.getElementById('upNotes')?.value.trim()    || '';
+  }
+
+  if (!carbon && !plastic && !hydration) return toast('⚠️','Isi minimal satu nilai data.');
+
+  const btnEl = document.getElementById('btnUploadCarbon');
+  if (btnEl) { btnEl.disabled=true; btnEl.textContent='Menyimpan...'; }
+  setSyncState('syncing');
+
+  try {
+    const payload = { action:'uploadCarbon', token:session.token, userId:session.userId, email:session.email,
+      carbonSaved:carbon, plasticPrevented:plastic, hydration, activityType:type, notes };
+
+    // Attach bill image jika ada (max 500KB)
+    if (window.billImageData && window.billImageData.length < 500000) {
+      payload.billImage = window.billImageData;
+    }
+
+    const res = await apiCall(payload);
+    if (res.success) {
+      toast('✅', `Data disimpan ke Google Sheets! Carbon: ${carbon.toFixed(2)}kg`);
+      ['upCarbon','upPlastic','upHydration','upType','upNotes','billAmount','billNotes'].forEach(id => {
+        const el=document.getElementById(id); if(el) el.value='';
+      });
+      document.getElementById('billPreview').innerHTML = '';
+      window.billImageData = null;
+      await loadUserData();
+    } else {
+      toast('⚠️', res.message);
+    }
+  } catch(e) {
+    toast('⚠️','Gagal simpan data. Cek koneksi internet.');
+    setSyncState('offline');
+  }
+  if (btnEl) { btnEl.disabled=false; btnEl.textContent='SIMPAN DATA CARBON →'; }
+}
+
+/* ═══════════════════════════════════════════════
+   LOGOUT
+═══════════════════════════════════════════════ */
+function confirmLogout() {
+  if (confirm('Logout dari NAVIN Carbon OS?')) {
+    clearSession();
+    document.getElementById('authGate').classList.remove('hidden');
+    document.getElementById('syncIndicator').style.display = 'none';
+    document.getElementById('loginEmail').value    = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginMsg').textContent = '';
+    toast('👋','Sampai jumpa! Data kamu aman tersimpan di cloud.');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   TAB NAVIGATION
+═══════════════════════════════════════════════ */
+function showTab(name, btn) {
+  document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  if (name === 'analytics')   initAnalytics();
+  if (name === 'dashboard')   initBars();
+  if (name === 'activity')    loadUserData();
+  if (name === 'leaderboard') renderLeaderboard();
+}
+
+/* ═══════════════════════════════════════════════
+   BARS ANIMATION
+═══════════════════════════════════════════════ */
+function initBars() {
+  // dibisi dari renderDashboard jika ada data, fallback demo
+  const s1 = document.getElementById('s1bar');
+  if (s1 && s1.style.width === '0%') {
+    setTimeout(() => {
+      document.getElementById('s1bar').style.width='26%';
+      document.getElementById('s2bar').style.width='19%';
+      document.getElementById('s3bar').style.width='55%';
+    }, 200);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   ANALYTICS
+═══════════════════════════════════════════════ */
+function initAnalytics() {
+  setTimeout(() => {
+    document.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.width; });
+  }, 200);
+  const data  = [11.2, 10.8, 10.1, 9.8, 10.6, parseFloat(document.getElementById('monthlyTotal')?.textContent) || 9.4];
+  const max   = Math.max(...data);
+  const chart = document.getElementById('trendChart');
+  if (chart && chart.children.length === 0) {
+    data.forEach((v, i) => {
+      const h     = Math.round((v / max) * 110);
+      const color = i === 5 ? '#0266FF' : (v <= data[5] ? '#00C853' : '#EFFB00');
+      const div   = document.createElement('div');
+      div.className = 'trend-bar-wrap';
+      div.innerHTML = `
+        <div style="font-size:11px;font-weight:700;color:${color};opacity:.8">${v}</div>
+        <div class="trend-bar-inner" style="height:0;background:${color};transition:height 1s ${i*0.1}s ease" data-h="${h}px"></div>`;
+      chart.appendChild(div);
+    });
+    setTimeout(() => { chart.querySelectorAll('.trend-bar-inner').forEach(b => { b.style.height=b.dataset.h; }); }, 100);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   FULL OFFSET
+═══════════════════════════════════════════════ */
+async function doFullOffset() {
+  const session = getSession();
+  const total   = parseFloat(document.getElementById('monthlyTotal').textContent) || 0;
+  if (session && total > 0) {
+    try {
+      await apiCall({ action:'uploadCarbon', token:session.token, userId:session.userId, email:session.email,
+        carbonSaved:0, activityType:'Full Monthly Offset', notes:'Net Zero — Jejakin smart contract' });
+    } catch(e) {}
+  }
+  totalOffsetKg = total;
+  document.getElementById('offsetDone').textContent   = total.toFixed(1)+' kg CO₂e';
+  document.getElementById('offsetRemain').textContent = '0.0 kg CO₂e';
+  document.getElementById('offsetCost').textContent   = 'Rp 0';
+  const tEl = document.getElementById('monthlyTrend');
+  tEl.textContent='✓ NET ZERO'; tEl.style.color='#00C853'; tEl.classList.remove('up');
+  toast('🏆','<strong>NET ZERO bulan ini!</strong> Smart contract dieksekusi → Jejakin Kalimantan. 🌳🌳🌳');
+}
+
+/* ═══════════════════════════════════════════════
+   DEMO TRANSACTION SIMULATOR
+═══════════════════════════════════════════════ */
+const demoTx = [
+  { emoji:'🎮', name:'Nintendo Switch Game', app:'Tokopedia · Rp 320.000', scope:'s3', label:'Lifestyle', val:'1.2kg', cls:'high', equiv:'= 3 Mangrove/th', price:'Rp 18.000', kg:1.2 },
+  { emoji:'🚂', name:'Kereta Argo Bromo JKT→SBY', app:'KAI Access · Rp 350.000', scope:'s1', label:'Mobility', val:'380g', cls:'mid', equiv:'= 1 Mangrove/th', price:'Rp 5.700', kg:0.38 },
+  { emoji:'🧴', name:'Skincare The Body Shop', app:'Shopee · Rp 280.000', scope:'s3', label:'Lifestyle', val:'520g', cls:'mid', equiv:'= AC 70 mnt', price:'Rp 7.800', kg:0.52 },
+  { emoji:'🚌', name:'Bus Transjakarta', app:'JakCard · Rp 3.500', scope:'s1', label:'Mobility', val:'42g', cls:'low', equiv:'= TV 30 mnt', price:'Rp 630', kg:0.042 },
+  { emoji:'🌐', name:'Netflix Premium', app:'Debit BCA · Rp 186.000', scope:'s2', label:'Utilities', val:'95g', cls:'low', equiv:'= 8 mnt AC', price:'Rp 1.425', kg:0.095 },
+];
+let demoIdx = 0;
+async function addDemoTransaction() {
+  const session = getSession();
+  if (!session) return toast('⚠️','Login dulu sebelum menambah transaksi.');
+  const t = demoTx[demoIdx % demoTx.length];
+  demoIdx++;
+
+  // Simpan ke Sheets
+  try {
+    await apiCall({ action:'uploadCarbon', token:session.token, userId:session.userId, email:session.email,
+      carbonSaved:t.kg, plasticPrevented:0, hydration:0, activityType:t.label+': '+t.name, notes:'Simulated AI POS interception' });
+  } catch(e) {}
+
+  const el = document.createElement('div');
+  el.className = 'tx-item';
+  el.style.cssText = 'opacity:0;transform:translateX(-20px)';
+  el.innerHTML = `
+    <div class="tx-emoji">${t.emoji}</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.name}</div>
+      <div class="tx-meta">${t.app} · Baru saja <span class="tx-scope-tag ${t.scope}">${t.label}</span></div>
+    </div>
+    <div class="tx-co2">
+      <div class="tx-co2-val ${t.cls}">${t.val}</div>
+      <div class="tx-co2-unit">CO₂e</div>
+      <div class="tx-equiv">${t.equiv}</div>
+    </div>
+    <button class="tx-offset pending" onclick="offsetTxSave(this,'${t.name}','${t.price}',${t.kg})">Offset ${t.price}</button>`;
+  document.getElementById('txList').prepend(el);
+  requestAnimationFrame(() => { el.style.transition='all .4s ease'; el.style.opacity='1'; el.style.transform='translateX(0)'; });
+  toast('⚡', `AI mendeteksi: <strong>${t.name}</strong> — ${t.val} CO₂e → disimpan ke Sheets`);
+  setSyncState('synced');
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+let toastTimer;
+function toast(icon, html) {
+  const el = document.getElementById('toast');
+  document.getElementById('toastIcon').textContent = icon;
+  document.getElementById('toastText').innerHTML   = html;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  checkOnline();
+  const session = getSession();
+  if (session) {
+    // sudah punya session — langsung buka app
+    openApp();
+  } else {
+    // tampilkan auth gate
+    document.getElementById('authGate').classList.remove('hidden');
+  }
+});
+</script>
+
+</body>
+</html>
