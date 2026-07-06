@@ -1,496 +1,1306 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NAVIN Social — Personal Carbon Community</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --blue: #0266FF;
-      --yellow: #EFFB00;
-      --black: #050505;
-      --white: #F5F7FA;
-      --green: #00C853;
-      --red: #FF3B30;
-      --gray: #1A1A1A;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAVIN - Social Impact Community</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+    --blue:#0266FF;
+    --yellow:#EFFB00;
+    --black:#050505;
+    --white:#F5F7FA;
+    --dark-gray:#0E0E0E;
+    --light-gray:#1A1A1A;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Space Grotesk',sans-serif;
+    background:var(--black);
+    color:white;
+    overflow-x:hidden;
+}
+
+/* APP LAYOUT */
+
+.app-container{
+    display:flex;
+    height:100vh;
+    background:var(--black);
+}
+
+/* TOP NAV */
+
+.topbar{
+    position:sticky;
+    top:0;
+    z-index:50;
+    
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 24px;
+    
+    background:rgba(5,5,5,.95);
+    backdrop-filter:blur(12px);
+    border-bottom:2px solid rgba(239,251,0,.3);
+}
+
+.logo-nav{
+    font-size:32px;
+    font-weight:900;
+    color:var(--yellow);
+    letter-spacing:-3px;
+}
+
+.user-status{
+    display:flex;
+    gap:16px;
+    align-items:center;
+}
+
+.coin-display{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(239,251,0,.1);
+    border:1px solid rgba(239,251,0,.3);
+    padding:8px 14px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--yellow);
+}
+
+.coin-display strong{
+    font-size:18px;
+}
+
+.user-level{
+    background:linear-gradient(135deg, #0266FF, #003EB5);
+    padding:6px 12px;
+    border-radius:8px;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:1px;
+    text-transform:uppercase;
+}
+
+.user-level.aoc{
+    background:linear-gradient(135deg, #EFFB00, #CCB800);
+    color:var(--black);
+}
+
+/* MAIN CONTENT */
+
+.main-content{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+.content-area{
+    flex:1;
+    overflow-y:auto;
+    padding:24px;
+}
+
+/* TAB NAVIGATION */
+
+.tab-nav{
+    display:flex;
+    gap:8px;
+    border-bottom:2px solid rgba(239,251,0,.2);
+    background:rgba(5,5,5,.85);
+    backdrop-filter:blur(12px);
+    padding:0 24px;
+}
+
+.tab-btn{
+    padding:16px 20px;
+    background:none;
+    border:none;
+    color:rgba(255,255,255,.5);
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:all 0.3s ease;
+    border-bottom:3px solid transparent;
+}
+
+.tab-btn:hover{
+    color:white;
+}
+
+.tab-btn.active{
+    color:var(--yellow);
+    border-bottom-color:var(--yellow);
+}
+
+.tab-content{
+    display:none;
+}
+
+.tab-content.active{
+    display:block;
+    animation:fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn{
+    from{ opacity:0; }
+    to{ opacity:1; }
+}
+
+/* HOME TAB */
+
+.hero-banner{
+    width:100%;
+    height:240px;
+    background:linear-gradient(135deg, #0266FF 0%, #003EB5 100%);
+    border-radius:24px;
+    padding:32px;
+    margin-bottom:32px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    color:white;
+    position:relative;
+    overflow:hidden;
+}
+
+.hero-banner::before{
+    content:'';
+    position:absolute;
+    top:-50%;
+    right:-10%;
+    width:400px;
+    height:400px;
+    background:radial-gradient(circle, rgba(239,251,0,.1), transparent);
+    border-radius:50%;
+}
+
+.hero-content{
+    position:relative;
+    z-index:2;
+}
+
+.hero-title{
+    font-size:42px;
+    font-weight:900;
+    letter-spacing:-2px;
+    margin-bottom:8px;
+}
+
+.hero-subtitle{
+    font-size:14px;
+    opacity:.9;
+    margin-bottom:20px;
+}
+
+.hero-stats{
+    display:flex;
+    gap:32px;
+}
+
+.hero-stat{
+    display:flex;
+    flex-direction:column;
+}
+
+.hero-stat-label{
+    font-size:11px;
+    opacity:.7;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:4px;
+}
+
+.hero-stat-value{
+    font-size:32px;
+    font-weight:900;
+    letter-spacing:-2px;
+}
+
+/* FEED */
+
+.feed-container{
+    max-width:600px;
+    margin:0 auto;
+}
+
+.post-card{
+    background:var(--light-gray);
+    border-radius:20px;
+    overflow:hidden;
+    margin-bottom:20px;
+    border:1px solid rgba(239,251,0,.2);
+    transition:all 0.3s ease;
+}
+
+.post-card:hover{
+    border-color:rgba(239,251,0,.4);
+    background:var(--dark-gray);
+}
+
+.post-header{
+    padding:16px 20px;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    border-bottom:1px solid rgba(239,251,0,.1);
+}
+
+.post-avatar{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--blue), var(--yellow));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    font-size:18px;
+}
+
+.post-user-info h4{
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:2px;
+}
+
+.post-user-info p{
+    font-size:11px;
+    color:rgba(255,255,255,.6);
+}
+
+.post-image{
+    width:100%;
+    aspect-ratio:1/1;
+    object-fit:cover;
+}
+
+.post-body{
+    padding:16px 20px;
+}
+
+.post-text{
+    font-size:14px;
+    line-height:1.6;
+    margin-bottom:12px;
+}
+
+.post-hashtags{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:12px;
+}
+
+.post-hashtag{
+    font-size:12px;
+    color:var(--blue);
+}
+
+.post-stats{
+    display:flex;
+    gap:20px;
+    padding:12px 0;
+    border-top:1px solid rgba(239,251,0,.1);
+    border-bottom:1px solid rgba(239,251,0,.1);
+    font-size:12px;
+}
+
+.post-stat-item{
+    display:flex;
+    align-items:center;
+    gap:4px;
+}
+
+.post-stat-item strong{
+    color:var(--yellow);
+}
+
+.post-actions{
+    display:flex;
+    gap:12px;
+    padding:12px 0;
+}
+
+.post-action-btn{
+    flex:1;
+    background:none;
+    border:1px solid rgba(239,251,0,.3);
+    color:white;
+    padding:10px;
+    border-radius:10px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.3s ease;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+}
+
+.post-action-btn:hover{
+    background:rgba(239,251,0,.1);
+    border-color:rgba(239,251,0,.6);
+}
+
+/* COIN BADGE */
+
+.coin-badge{
+    display:inline-block;
+    background:rgba(239,251,0,.2);
+    color:var(--yellow);
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:900;
+}
+
+/* GROUPS TAB */
+
+.groups-container{
+    max-width:800px;
+    margin:0 auto;
+}
+
+.create-group-btn{
+    width:100%;
+    padding:16px;
+    background:linear-gradient(135deg, var(--yellow), #CCBB00);
+    border:none;
+    border-radius:16px;
+    color:var(--black);
+    font-weight:900;
+    font-size:14px;
+    letter-spacing:1px;
+    cursor:pointer;
+    margin-bottom:24px;
+    transition:all 0.3s ease;
+}
+
+.create-group-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 30px rgba(239,251,0,.2);
+}
+
+.group-card{
+    background:var(--light-gray);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:16px;
+    border:1px solid rgba(239,251,0,.2);
+    transition:all 0.3s ease;
+}
+
+.group-card:hover{
+    border-color:rgba(239,251,0,.4);
+}
+
+.group-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:start;
+    margin-bottom:12px;
+}
+
+.group-name{
+    font-size:18px;
+    font-weight:900;
+}
+
+.group-tag{
+    background:rgba(239,251,0,.15);
+    color:var(--yellow);
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:700;
+}
+
+.group-info{
+    font-size:13px;
+    color:rgba(255,255,255,.7);
+    margin-bottom:12px;
+}
+
+.group-members{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+}
+
+.member-avatar{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--blue), var(--yellow));
+    font-size:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+}
+
+.group-actions{
+    display:flex;
+    gap:10px;
+}
+
+.group-btn{
+    flex:1;
+    padding:10px;
+    background:rgba(2,102,255,.1);
+    border:1px solid rgba(2,102,255,.3);
+    color:var(--blue);
+    border-radius:10px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.3s ease;
+}
+
+.group-btn:hover{
+    background:rgba(2,102,255,.2);
+}
+
+.aoc-only-badge{
+    display:inline-block;
+    background:rgba(239,251,0,.2);
+    color:var(--yellow);
+    padding:4px 8px;
+    border-radius:4px;
+    font-size:10px;
+    font-weight:900;
+}
+
+/* CHAT TAB */
+
+.chat-container{
+    display:flex;
+    gap:16px;
+    max-width:900px;
+    margin:0 auto;
+    height:500px;
+}
+
+.chat-list{
+    flex:0 0 280px;
+    background:var(--light-gray);
+    border-radius:16px;
+    overflow-y:auto;
+}
+
+.chat-item{
+    padding:12px;
+    border-bottom:1px solid rgba(239,251,0,.1);
+    cursor:pointer;
+    transition:all 0.3s ease;
+}
+
+.chat-item:hover{
+    background:var(--dark-gray);
+}
+
+.chat-item.active{
+    background:rgba(2,102,255,.15);
+    border-left:3px solid var(--blue);
+}
+
+.chat-item-header{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:4px;
+}
+
+.chat-item-avatar{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--blue), var(--yellow));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+}
+
+.chat-item-name{
+    font-size:13px;
+    font-weight:700;
+}
+
+.chat-item-preview{
+    font-size:12px;
+    color:rgba(255,255,255,.5);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.chat-window{
+    flex:1;
+    background:var(--light-gray);
+    border-radius:16px;
+    display:flex;
+    flex-direction:column;
+}
+
+.chat-header{
+    padding:16px;
+    border-bottom:1px solid rgba(239,251,0,.2);
+}
+
+.chat-header h3{
+    font-size:16px;
+    font-weight:700;
+}
+
+.chat-messages{
+    flex:1;
+    overflow-y:auto;
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.message{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+}
+
+.message.sent{
+    justify-content:flex-end;
+}
+
+.message-bubble{
+    max-width:70%;
+    padding:10px 14px;
+    border-radius:12px;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.message.received .message-bubble{
+    background:rgba(2,102,255,.15);
+    color:white;
+}
+
+.message.sent .message-bubble{
+    background:var(--blue);
+    color:white;
+}
+
+.chat-input-area{
+    padding:16px;
+    border-top:1px solid rgba(239,251,0,.2);
+    display:flex;
+    gap:10px;
+}
+
+.chat-input{
+    flex:1;
+    background:var(--dark-gray);
+    border:1px solid rgba(239,251,0,.2);
+    border-radius:10px;
+    padding:10px 12px;
+    color:white;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+}
+
+.chat-input::placeholder{
+    color:rgba(255,255,255,.4);
+}
+
+.chat-send-btn{
+    background:var(--yellow);
+    color:var(--black);
+    border:none;
+    border-radius:10px;
+    width:44px;
+    height:44px;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    transition:all 0.3s ease;
+}
+
+.chat-send-btn:hover{
+    background:#FFFF33;
+}
+
+/* PROFILE TAB */
+
+.profile-container{
+    max-width:600px;
+    margin:0 auto;
+}
+
+.profile-header{
+    background:linear-gradient(135deg, #0266FF 0%, #003EB5 100%);
+    border-radius:16px;
+    padding:32px;
+    margin-bottom:24px;
+    text-align:center;
+    color:white;
+    position:relative;
+    overflow:hidden;
+}
+
+.profile-avatar{
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    background:rgba(255,255,255,.2);
+    margin:0 auto 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:36px;
+    font-weight:900;
+}
+
+.profile-name{
+    font-size:28px;
+    font-weight:900;
+    margin-bottom:8px;
+    letter-spacing:-1px;
+}
+
+.profile-level{
+    display:inline-block;
+    background:rgba(255,255,255,.2);
+    padding:6px 12px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:900;
+    margin-bottom:16px;
+}
+
+.profile-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:12px;
+    padding:16px;
+    background:rgba(255,255,255,.1);
+    border-radius:12px;
+}
+
+.profile-stat{
+    text-align:center;
+}
+
+.profile-stat-number{
+    font-size:28px;
+    font-weight:900;
+    color:var(--yellow);
+    margin-bottom:4px;
+}
+
+.profile-stat-label{
+    font-size:11px;
+    opacity:.8;
+    text-transform:uppercase;
+}
+
+.profile-section{
+    background:var(--light-gray);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:16px;
+    border:1px solid rgba(239,251,0,.2);
+}
+
+.profile-section-title{
+    font-size:14px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:16px;
+    color:var(--yellow);
+}
+
+.profile-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid rgba(239,251,0,.1);
+}
+
+.profile-item:last-child{
+    border-bottom:none;
+}
+
+.profile-item-label{
+    font-size:13px;
+    color:rgba(255,255,255,.7);
+}
+
+.profile-item-value{
+    font-size:14px;
+    font-weight:700;
+}
+
+.edit-btn{
+    width:100%;
+    padding:12px;
+    background:var(--blue);
+    border:none;
+    border-radius:10px;
+    color:white;
+    font-weight:700;
+    cursor:pointer;
+    margin-bottom:12px;
+    transition:all 0.3s ease;
+}
+
+.edit-btn:hover{
+    background:#0052CC;
+}
+
+.hydration-progress{
+    width:100%;
+    height:12px;
+    background:rgba(255,255,255,.1);
+    border-radius:6px;
+    overflow:hidden;
+    margin-top:8px;
+}
+
+.hydration-progress-bar{
+    height:100%;
+    background:linear-gradient(90deg, #00D9FF, var(--blue));
+    width:65%;
+    transition:width 0.3s ease;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:768px){
+    .app-container{
+        flex-direction:column;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Space Grotesk', sans-serif;
-      background: var(--black);
-      color: white;
-      overflow-x: hidden;
+    .content-area{
+        padding:16px;
     }
 
-    .auth-gate {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      background: var(--black);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .tab-nav{
+        padding:0 16px;
     }
 
-    .auth-gate.hidden { display: none; }
-
-    .auth-box {
-      width: 100%;
-      max-width: 480px;
-      margin: 20px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 2px solid rgba(239, 251, 0, 0.3);
-      border-radius: 28px;
-      padding: 32px 28px;
+    .hero-stats{
+        flex-wrap:wrap;
+        gap:20px;
     }
 
-    .auth-title { font-size: 44px; font-weight: 900; margin-bottom: 12px; }
-    .auth-sub { font-size: 13px; opacity: 0.6; margin-bottom: 20px; }
-
-    .auth-input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 2px solid rgba(239, 251, 0, 0.15);
-      color: white;
-      font-family: 'Space Grotesk', sans-serif;
-      margin-bottom: 10px;
-      font-size: 14px;
+    .chat-container{
+        flex-direction:column;
+        height:auto;
     }
 
-    .auth-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--yellow);
-      color: var(--black);
-      border: none;
-      border-radius: 12px;
-      font-weight: 900;
-      cursor: pointer;
-      font-family: 'Space Grotesk', sans-serif;
-      margin-top: 10px;
+    .chat-list{
+        flex:0 0 auto;
     }
+}
 
-    .auth-btn:hover { background: #d4de00; }
-
-    .app {
-      display: grid;
-      grid-template-columns: 280px 1fr 320px;
-      min-height: 100vh;
-    }
-
-    .sidebar, .right-sidebar {
-      background: rgba(5, 5, 5, 0.95);
-      border: 2px solid rgba(239, 251, 0, 0.15);
-      padding: 20px;
-      max-height: 100vh;
-      overflow-y: auto;
-    }
-
-    .logo { font-size: 28px; font-weight: 900; color: var(--yellow); margin-bottom: 24px; }
-
-    .menu-btn {
-      width: 100%;
-      padding: 12px;
-      background: rgba(239, 251, 0, 0.1);
-      border: 2px solid rgba(239, 251, 0, 0.2);
-      color: white;
-      border-radius: 10px;
-      cursor: pointer;
-      margin-bottom: 8px;
-      font-weight: 700;
-      font-size: 13px;
-    }
-
-    .menu-btn.active, .menu-btn:hover { background: var(--yellow); color: var(--black); }
-
-    .main {
-      padding: 24px;
-      overflow-y: auto;
-      background: radial-gradient(circle at top, rgba(239,251,0,.05), transparent 30%);
-    }
-
-    .page { display: none; }
-    .page.active { display: block; }
-
-    .post {
-      background: rgba(255, 255, 255, 0.04);
-      border: 2px solid rgba(239, 251, 0, 0.15);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-
-    .post-author { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
-    .post-caption { font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
-    .post-actions { display: flex; gap: 8px; }
-    .post-btn { flex: 1; padding: 8px; background: rgba(239, 251, 0, 0.1); border: 1px solid rgba(239, 251, 0, 0.2); color: var(--yellow); border-radius: 6px; cursor: pointer; font-size: 12px; }
-
-    .stat-box {
-      background: rgba(239, 251, 0, 0.08);
-      border: 2px solid rgba(239, 251, 0, 0.2);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 12px;
-      text-align: center;
-    }
-
-    .stat-label { font-size: 10px; color: rgba(255, 255, 255, 0.6); margin-bottom: 3px; }
-    .stat-value { font-size: 24px; font-weight: 900; color: var(--yellow); }
-
-    .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 8000; display: none; align-items: center; justify-content: center; }
-    .modal.active { display: flex; }
-    .modal-box { background: var(--gray); border: 2px solid rgba(239, 251, 0, 0.2); border-radius: 14px; padding: 20px; max-width: 450px; width: 90%; }
-    .modal-title { font-size: 18px; font-weight: 900; margin-bottom: 12px; }
-    .modal-close { float: right; cursor: pointer; font-size: 20px; }
-
-    @media (max-width: 1200px) {
-      .app { grid-template-columns: 1fr; }
-      .sidebar, .right-sidebar { display: none; }
-    }
-  </style>
+</style>
 </head>
+
 <body>
 
-<div class="auth-gate" id="authGate">
-  <div class="auth-box">
-    <div class="auth-title">NAVIN</div>
-    <div class="auth-sub">Track carbon, join community, earn coins!</div>
-
-    <input type="email" id="email" class="auth-input" placeholder="Email">
-    <input type="password" id="password" class="auth-input" placeholder="Password">
-    <button class="auth-btn" onclick="login()">MASUK</button>
-  </div>
+<div class="topbar">
+    <div class="logo-nav">NAVIN</div>
+    <div class="user-status">
+        <div class="coin-display">
+            💰 <strong>2,450</strong> Coins
+        </div>
+        <div class="user-level aoc">
+            Agent Of Change
+        </div>
+    </div>
 </div>
 
-<div class="app" id="app" style="display:none;">
+<div class="main-content">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="logo">NAVIN</div>
-    <button class="menu-btn active" onclick="show('home')">🏠 Home</button>
-    <button class="menu-btn" onclick="show('profile')">👤 Profile</button>
-    <button class="menu-btn" onclick="show('friends')">👥 Friends</button>
-    <button class="menu-btn" onclick="show('groups')">👨‍👩‍👧‍👦 Groups</button>
-    <button class="menu-btn" onclick="logout()" style="background:rgba(255,59,48,.1);color:#FF3B30;border-color:#FF3B30;">🚪 Logout</button>
-  </div>
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('home')">🏠 Home</button>
+        <button class="tab-btn" onclick="switchTab('groups')">👥 Groups</button>
+        <button class="tab-btn" onclick="switchTab('chat')">💬 Chat</button>
+        <button class="tab-btn" onclick="switchTab('profile')">👤 Profile</button>
+    </div>
 
-  <!-- MAIN -->
-  <div class="main">
-    <div id="home" class="page active">
-      <div style="max-width:600px;margin:0 auto;">
-        <div class="post" style="background:rgba(2,102,255,.1);border-color:rgba(2,102,255,.3);text-align:center;">
-          <div style="font-size:24px;font-weight:900;margin-bottom:6px;">🌿 Welcome!</div>
-          <div style="font-size:12px;opacity:0.7;margin-bottom:12px;">Track carbon, share with friends, earn coins!</div>
-          <button class="auth-btn" style="margin:0;width:100%;" onclick="openUpload()">📸 Share Activity</button>
+    <div class="content-area">
+
+        <!-- HOME TAB -->
+        <div id="home" class="tab-content active">
+            
+            <div class="hero-banner">
+                <div class="hero-content">
+                    <div class="hero-title">Hydration Impact</div>
+                    <div class="hero-subtitle">📸 Share Your NAVIN Moment & Earn Coins</div>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-label">This Month</div>
+                        <div class="hero-stat-value">12.5L</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-label">Target Daily</div>
+                        <div class="hero-stat-value">1.0L</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-label">Photos</div>
+                        <div class="hero-stat-value">18</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feed-container">
+
+                <!-- SAMPLE POST 1 -->
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-avatar">A</div>
+                        <div class="post-user-info">
+                            <h4>Anya Marissa</h4>
+                            <p>2 hours ago</p>
+                        </div>
+                    </div>
+
+                    <img src="https://images.unsplash.com/photo-1609341290242-757658bae4d9?w=500&h=500&fit=crop" alt="post" class="post-image" style="display:none;background:linear-gradient(135deg, #0266FF, #00D9FF);">
+
+                    <div class="post-body">
+                        <div class="post-text">🌱 Finished my 1L hydration goal for today! Feeling energized and helping the planet one sip at a time. #HydrationChallenge #NavinMover</div>
+                        <div class="post-hashtags">
+                            <span class="post-hashtag">#HydrationChallenge</span>
+                            <span class="post-hashtag">#NavinMover</span>
+                            <span class="post-hashtag">#ClimateAction</span>
+                        </div>
+                        <div class="post-stats">
+                            <div class="post-stat-item">❤️ <strong>42</strong> Likes</div>
+                            <div class="post-stat-item">💬 <strong>8</strong> Comments</div>
+                            <div class="coin-badge">+20 Coins</div>
+                        </div>
+                        <div class="post-actions">
+                            <button class="post-action-btn">❤️ Like (+1 Coin)</button>
+                            <button class="post-action-btn">💬 Comment</button>
+                            <button class="post-action-btn">↗️ Share</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SAMPLE POST 2 -->
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-avatar">R</div>
+                        <div class="post-user-info">
+                            <h4>Reza Gunawan</h4>
+                            <p>5 hours ago</p>
+                        </div>
+                    </div>
+
+                    <div class="post-body">
+                        <div class="post-text">🏃‍♂️ Just logged my morning run! My hydration strategy is working perfectly. 650ml already today. Path to 1L looks strong! #NavinMover</div>
+                        <div class="post-hashtags">
+                            <span class="post-hashtag">#NavinMover</span>
+                            <span class="post-hashtag">#HealthyHydration</span>
+                            <span class="post-hashtag">#DailyGoal</span>
+                        </div>
+                        <div class="post-stats">
+                            <div class="post-stat-item">❤️ <strong>28</strong> Likes</div>
+                            <div class="post-stat-item">💬 <strong>5</strong> Comments</div>
+                            <div class="coin-badge">+20 Coins</div>
+                        </div>
+                        <div class="post-actions">
+                            <button class="post-action-btn">❤️ Like (+1 Coin)</button>
+                            <button class="post-action-btn">💬 Comment</button>
+                            <button class="post-action-btn">↗️ Share</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SAMPLE POST 3 -->
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-avatar" style="background:linear-gradient(135deg, #EFFB00, #CCBB00);">D</div>
+                        <div class="post-user-info">
+                            <h4>Diana Kusuma <span class="aoc-only-badge">AOC</span></h4>
+                            <p>8 hours ago</p>
+                        </div>
+                    </div>
+
+                    <div class="post-body">
+                        <div class="post-text">🌍 Exciting news! The Jakarta Eco Warriors group just hit 150 members! 🎉 Amazing to see our community growing. Next event: Beach cleanup this weekend! #EcoWarriors #JakartaMovement</div>
+                        <div class="post-hashtags">
+                            <span class="post-hashtag">#EcoWarriors</span>
+                            <span class="post-hashtag">#JakartaMovement</span>
+                            <span class="post-hashtag">#Community</span>
+                        </div>
+                        <div class="post-stats">
+                            <div class="post-stat-item">❤️ <strong>156</strong> Likes</div>
+                            <div class="post-stat-item">💬 <strong>34</strong> Comments</div>
+                            <div class="coin-badge">+20 Coins</div>
+                        </div>
+                        <div class="post-actions">
+                            <button class="post-action-btn">❤️ Like (+1 Coin)</button>
+                            <button class="post-action-btn">💬 Comment</button>
+                            <button class="post-action-btn">↗️ Share</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
-        <div id="feed" style="margin-top:16px;"></div>
-      </div>
-    </div>
 
-    <div id="profile" class="page">
-      <div style="max-width:450px;margin:0 auto;">
-        <div class="stat-box" style="text-align:left;background:rgba(2,102,255,.1);">
-          <div style="font-weight:700;font-size:18px;margin-bottom:4px;" id="pname">—</div>
-          <div style="font-size:11px;opacity:0.6;" id="pemail">—</div>
-          <div style="font-size:10px;margin-top:6px;color:var(--yellow);" id="plevel">—</div>
+        <!-- GROUPS TAB -->
+        <div id="groups" class="tab-content">
+            
+            <div class="groups-container">
+
+                <button class="create-group-btn">✨ Create Group (Agent Of Change Only)</button>
+
+                <!-- GROUP 1 -->
+                <div class="group-card">
+                    <div class="group-header">
+                        <div>
+                            <div class="group-name">Jakarta Eco Warriors</div>
+                            <div class="group-info">👥 247 members • 🔖 Active</div>
+                        </div>
+                        <div class="group-tag">#EcoWarriors</div>
+                    </div>
+
+                    <div class="group-info" style="margin-bottom:16px;">
+                        🌱 Dedicated to sustainable hydration practices and environmental impact in Jakarta region. Led by Agent Of Change moderators.
+                    </div>
+
+                    <div class="group-members">
+                        <div class="member-avatar">D</div>
+                        <div class="member-avatar">A</div>
+                        <div class="member-avatar">R</div>
+                        <div class="member-avatar">+244</div>
+                    </div>
+
+                    <div class="group-actions">
+                        <button class="group-btn">📍 Join Group</button>
+                        <button class="group-btn">👁️ View Posts</button>
+                    </div>
+                </div>
+
+                <!-- GROUP 2 -->
+                <div class="group-card">
+                    <div class="group-header">
+                        <div>
+                            <div class="group-name">Morning Hydration Habits</div>
+                            <div class="group-info">👥 89 members • 🔖 Active</div>
+                        </div>
+                        <div class="group-tag">#MorningRoutine</div>
+                    </div>
+
+                    <div class="group-info" style="margin-bottom:16px;">
+                        ☀️ For early risers! Share your morning hydration tips, routines, and how it boosts your daily performance.
+                    </div>
+
+                    <div class="group-members">
+                        <div class="member-avatar">R</div>
+                        <div class="member-avatar">M</div>
+                        <div class="member-avatar">+87</div>
+                    </div>
+
+                    <div class="group-actions">
+                        <button class="group-btn">📍 Join Group</button>
+                        <button class="group-btn">👁️ View Posts</button>
+                    </div>
+                </div>
+
+                <!-- GROUP 3 -->
+                <div class="group-card">
+                    <div class="group-header">
+                        <div>
+                            <div class="group-name">Green Campus Initiative</div>
+                            <div class="group-info">👥 156 members • 🔖 Active</div>
+                        </div>
+                        <div class="group-tag">#CampusSustainability</div>
+                    </div>
+
+                    <div class="group-info" style="margin-bottom:16px;">
+                        🎓 University students uniting for sustainable campus practices. Moderated by campus Agent Of Change leaders.
+                    </div>
+
+                    <div class="group-members">
+                        <div class="member-avatar">T</div>
+                        <div class="member-avatar">S</div>
+                        <div class="member-avatar">+154</div>
+                    </div>
+
+                    <div class="group-actions">
+                        <button class="group-btn">📍 Join Group</button>
+                        <button class="group-btn">👁️ View Posts</button>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
 
-        <div class="stat-box">
-          <div class="stat-label">💰 Coins</div>
-          <div class="stat-value" id="pcoins">0</div>
+        <!-- CHAT TAB -->
+        <div id="chat" class="tab-content">
+            
+            <div class="chat-container">
+
+                <div class="chat-list">
+                    <div class="chat-item active">
+                        <div class="chat-item-header">
+                            <div class="chat-item-avatar">A</div>
+                            <div class="chat-item-name">Anya Marissa</div>
+                        </div>
+                        <div class="chat-item-preview">Thanks for the hydration tip!</div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <div class="chat-item-avatar">R</div>
+                            <div class="chat-item-name">Reza Gunawan</div>
+                        </div>
+                        <div class="chat-item-preview">Hey, want to join the group?</div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <div class="chat-item-avatar">D</div>
+                            <div class="chat-item-name">Diana Kusuma</div>
+                        </div>
+                        <div class="chat-item-preview">Beach cleanup is this Saturday!</div>
+                    </div>
+
+                    <div class="chat-item">
+                        <div class="chat-item-header">
+                            <div class="chat-item-avatar">M</div>
+                            <div class="chat-item-name">Miko Santoso</div>
+                        </div>
+                        <div class="chat-item-preview">Can you moderate this group?</div>
+                    </div>
+                </div>
+
+                <div class="chat-window">
+                    <div class="chat-header">
+                        <h3>💬 Anya Marissa</h3>
+                        <p style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;">Active 2 hours ago</p>
+                    </div>
+
+                    <div class="chat-messages">
+                        <div class="message received">
+                            <div class="message-bubble">Hey! How was your hydration session?</div>
+                        </div>
+
+                        <div class="message sent">
+                            <div class="message-bubble">Great! Hit 1L today 🎉</div>
+                        </div>
+
+                        <div class="message received">
+                            <div class="message-bubble">That's amazing! Thanks for the hydration tip you shared!</div>
+                        </div>
+
+                        <div class="message received">
+                            <div class="message-bubble">You should join our group - Jakarta Eco Warriors</div>
+                        </div>
+
+                        <div class="message sent">
+                            <div class="message-bubble">Definitely! Sounds perfect 💪</div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input type="text" class="chat-input" placeholder="Type a message...">
+                        <button class="chat-send-btn">→</button>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
 
-        <div class="stat-box">
-          <div class="stat-label">💧 Hydration</div>
-          <div class="stat-value" id="phydro">0 ml</div>
-          <button class="auth-btn" style="margin:8px 0 0 0;padding:8px;" onclick="hydrate()">+ 250ml</button>
+        <!-- PROFILE TAB -->
+        <div id="profile" class="tab-content">
+            
+            <div class="profile-container">
+
+                <div class="profile-header">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-name">Devan Tegar</div>
+                    <div class="profile-level">Agent Of Change</div>
+
+                    <div class="profile-stats">
+                        <div class="profile-stat">
+                            <div class="profile-stat-number">2,450</div>
+                            <div class="profile-stat-label">Total Coins</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-number">67.5L</div>
+                            <div class="profile-stat-label">Total Hydration</div>
+                        </div>
+                        <div class="profile-stat">
+                            <div class="profile-stat-number">24</div>
+                            <div class="profile-stat-label">Posts</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EDIT NAME SECTION -->
+                <div class="profile-section">
+                    <div class="profile-section-title">⚙️ Account Settings</div>
+                    <button class="edit-btn">✏️ Edit Name & Bio</button>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">User Level</div>
+                        <div class="profile-item-value" style="color:var(--yellow);">Agent Of Change</div>
+                    </div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Member Since</div>
+                        <div class="profile-item-value">March 2024</div>
+                    </div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Groups Created</div>
+                        <div class="profile-item-value">3</div>
+                    </div>
+                </div>
+
+                <!-- COIN SECTION -->
+                <div class="profile-section">
+                    <div class="profile-section-title">💰 Coin Breakdown</div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Photo Uploads</div>
+                        <div class="profile-item-value">+1,280 coins</div>
+                    </div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Likes Received</div>
+                        <div class="profile-item-value">+680 coins</div>
+                    </div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Hydration Goals</div>
+                        <div class="profile-item-value">+490 coins</div>
+                    </div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Current Balance</div>
+                        <div class="profile-item-value" style="color:var(--yellow);font-size:18px;">2,450 Coins</div>
+                    </div>
+                </div>
+
+                <!-- HYDRATION SECTION -->
+                <div class="profile-section">
+                    <div class="profile-section-title">💧 Hydration Tracking</div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Today's Progress</div>
+                        <div class="profile-item-value">650ml / 1000ml</div>
+                    </div>
+
+                    <div class="hydration-progress">
+                        <div class="hydration-progress-bar" style="width:65%;"></div>
+                    </div>
+
+                    <div class="profile-item" style="margin-top:16px;">
+                        <div class="profile-item-label">This Week Average</div>
+                        <div class="profile-item-value">1.05L / day</div>
+                    </div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Goals Completed</div>
+                        <div class="profile-item-value" style="color:var(--yellow);">18 days this month</div>
+                    </div>
+
+                    <div class="profile-item">
+                        <div class="profile-item-label">Coins from Hydration</div>
+                        <div class="profile-item-value">+490 coins (5 per goal)</div>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
-      </div>
+
     </div>
 
-    <div id="friends" class="page">
-      <div style="max-width:450px;margin:0 auto;">
-        <button class="auth-btn" style="width:100%;margin-bottom:12px;" onclick="openAddFriend()">➕ Add Friend</button>
-        <div id="flist"></div>
-      </div>
-    </div>
-
-    <div id="groups" class="page">
-      <div style="max-width:450px;margin:0 auto;">
-        <button class="auth-btn" style="width:100%;margin-bottom:12px;display:none;" id="createBtn" onclick="openCreateGroup()">➕ Create Group</button>
-        <div id="glist"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- RIGHT SIDEBAR -->
-  <div class="right-sidebar">
-    <div style="font-size:10px;font-weight:900;color:rgba(255,255,255,.5);margin-bottom:12px;text-transform:uppercase;">⚡ Stats</div>
-    <div class="stat-box">
-      <div class="stat-label">Total Coins</div>
-      <div class="stat-value" id="scoins">0</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-label">Hydration Today</div>
-      <div class="stat-value" id="shydro">0</div>
-      <div style="font-size:10px;opacity:0.6;">/ 1000 ml</div>
-    </div>
-  </div>
-
-</div>
-
-<!-- MODALS -->
-<div class="modal" id="uploadModal">
-  <div class="modal-box">
-    <span class="modal-close" onclick="closeUpload()">×</span>
-    <div class="modal-title">📸 Share</div>
-    <input type="file" id="photo" accept="image/*" class="auth-input" style="margin-bottom:8px;">
-    <textarea id="caption" class="auth-input" placeholder="Caption..." style="height:60px;resize:vertical;"></textarea>
-    <button class="auth-btn" onclick="share()">🚀 Share (+20 Coins)</button>
-  </div>
-</div>
-
-<div class="modal" id="addFriendModal">
-  <div class="modal-box">
-    <span class="modal-close" onclick="closeFriend()">×</span>
-    <div class="modal-title">➕ Add</div>
-    <input type="email" id="friendEmail" class="auth-input" placeholder="Email">
-    <button class="auth-btn" onclick="addFriend()">Add</button>
-  </div>
-</div>
-
-<div class="modal" id="createGroupModal">
-  <div class="modal-box">
-    <span class="modal-close" onclick="closeGroup()">×</span>
-    <div class="modal-title">👨‍👩‍👧‍👦 Create</div>
-    <input type="text" id="groupName" class="auth-input" placeholder="Group name">
-    <button class="auth-btn" onclick="createGroup()">Create</button>
-  </div>
 </div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycby-fxrDhMVd0jx6m6UmNnyCIxhSDIiVB6BTW_iENDgcuZ-3svHTgsxKe9vxwwCbjU33OQ/exec';
-let user = null;
 
-async function call(body) {
-  const url = API + '?payload=' + encodeURIComponent(JSON.stringify(body));
-  const r = await fetch(url);
-  const t = await r.text();
-  try { return JSON.parse(t); } catch(e) { throw new Error('Invalid response'); }
+function switchTab(tabName) {
+    // Hide all tabs
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    
+    // Remove active from all buttons
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show selected tab
+    document.getElementById(tabName).classList.add('active');
+    
+    // Add active to clicked button
+    event.target.classList.add('active');
 }
 
-async function login() {
-  const e = document.getElementById('email').value.trim();
-  const p = document.getElementById('password').value.trim();
-  if (!e || !p) return alert('Fill fields');
-
-  try {
-    const r = await call({ action: 'login', email: e, password: p });
-    if (r.success) {
-      user = r;
-      localStorage.setItem('navin', JSON.stringify(r));
-      document.getElementById('authGate').classList.add('hidden');
-      document.getElementById('app').style.display = 'grid';
-      load();
-    } else {
-      alert(r.message);
-    }
-  } catch(e) {
-    alert('Error: ' + e.message);
-  }
-}
-
-function logout() {
-  localStorage.removeItem('navin');
-  location.reload();
-}
-
-function show(p) {
-  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-  document.getElementById(p).classList.add('active');
-  document.querySelectorAll('.menu-btn').forEach(el => el.classList.remove('active'));
-  event.target.classList.add('active');
-
-  if (p === 'profile') loadProfile();
-  if (p === 'friends') loadFriends();
-  if (p === 'groups') loadGroups();
-  if (p === 'home') loadFeed();
-}
-
-async function load() {
-  loadFeed();
-  loadProfile();
-  if (user.level === 'Agent Of Change') {
-    document.getElementById('createBtn').style.display = 'block';
-  }
-}
-
-async function loadFeed() {
-  try {
-    const r = await call({ action: 'getFeed', token: user.token, userId: user.userId });
-    if (r.success) {
-      document.getElementById('feed').innerHTML = (r.posts || []).map(p => `
-        <div class="post">
-          <div class="post-author">${p.name}</div>
-          <div class="post-caption">${p.caption}</div>
-          <div class="post-actions">
-            <button class="post-btn" onclick="like('${p.postId}')">❤️ ${p.likes || 0}</button>
-          </div>
-        </div>
-      `).join('') || '<div style="opacity:0.5;text-align:center;">No posts</div>';
-    }
-  } catch(e) {}
-}
-
-async function loadProfile() {
-  try {
-    const r = await call({ action: 'getMyProfile', token: user.token, userId: user.userId });
-    if (r.success) {
-      const p = r.profile;
-      document.getElementById('pname').textContent = p.name;
-      document.getElementById('pemail').textContent = p.email;
-      document.getElementById('plevel').textContent = p.level;
-      document.getElementById('pcoins').textContent = p.coins;
-      document.getElementById('phydro').textContent = Math.round(p.hydration * 1000) + ' ml';
-      document.getElementById('scoins').textContent = p.coins;
-      document.getElementById('shydro').textContent = Math.round(p.hydration * 1000);
-    }
-  } catch(e) {}
-}
-
-async function loadFriends() {
-  try {
-    const r = await call({ action: 'getMyFriends', token: user.token, userId: user.userId });
-    if (r.success) {
-      document.getElementById('flist').innerHTML = (r.friends || []).map(f => `
-        <div class="post">
-          <div class="post-author">${f.name}</div>
-        </div>
-      `).join('') || '<div style="opacity:0.5;">No friends</div>';
-    }
-  } catch(e) {}
-}
-
-async function loadGroups() {
-  try {
-    const r = await call({ action: 'getGroups', token: user.token, userId: user.userId });
-    if (r.success) {
-      document.getElementById('glist').innerHTML = (r.groups || []).map(g => `
-        <div class="post">
-          <div class="post-author">${g.name} ${g.isCreator ? '👑' : ''}</div>
-        </div>
-      `).join('') || '<div style="opacity:0.5;">No groups</div>';
-    }
-  } catch(e) {}
-}
-
-async function share() {
-  const cap = document.getElementById('caption').value.trim();
-  const file = document.getElementById('photo').files[0];
-  if (!cap) return alert('Add caption');
-  if (!file) return alert('Add photo');
-
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const r = await call({
-        action: 'uploadPost',
-        token: user.token,
-        userId: user.userId,
-        email: user.email,
-        name: user.name,
-        caption: cap,
-        photoBase64: e.target.result.substring(0, 1000)
-      });
-      if (r.success) {
-        alert(r.message);
-        closeUpload();
-        loadFeed();
-        loadProfile();
-      }
-    } catch(e) {
-      alert('Error');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-async function like(id) {
-  try {
-    const r = await call({ action: 'likePost', token: user.token, userId: user.userId, postId: id });
-    if (r.success) {
-      loadFeed();
-      loadProfile();
-    }
-  } catch(e) {}
-}
-
-async function hydrate() {
-  try {
-    const r = await call({ action: 'updateHydration', token: user.token, userId: user.userId, amount_ml: 250 });
-    if (r.success) {
-      alert(r.message);
-      loadProfile();
-    }
-  } catch(e) {}
-}
-
-async function addFriend() {
-  const e = document.getElementById('friendEmail').value.trim();
-  if (!e) return alert('Enter email');
-  try {
-    const r = await call({ action: 'addFriend', token: user.token, userId: user.userId, friendEmail: e });
-    if (r.success) {
-      alert(r.message);
-      closeFriend();
-      loadFriends();
-    } else {
-      alert(r.message);
-    }
-  } catch(e) {
-    alert('Error');
-  }
-}
-
-async function createGroup() {
-  const n = document.getElementById('groupName').value.trim();
-  if (!n) return alert('Enter name');
-  try {
-    const r = await call({ action: 'createGroup', token: user.token, userId: user.userId, groupName: n });
-    if (r.success) {
-      alert(r.message);
-      closeGroup();
-      loadGroups();
-    } else {
-      alert(r.message);
-    }
-  } catch(e) {
-    alert('Error');
-  }
-}
-
-function openUpload() { document.getElementById('uploadModal').classList.add('active'); }
-function closeUpload() { document.getElementById('uploadModal').classList.remove('active'); }
-function openAddFriend() { document.getElementById('addFriendModal').classList.add('active'); }
-function closeFriend() { document.getElementById('addFriendModal').classList.remove('active'); }
-function openCreateGroup() { document.getElementById('createGroupModal').classList.add('active'); }
-function closeGroup() { document.getElementById('createGroupModal').classList.remove('active'); }
-
-window.addEventListener('load', () => {
-  const saved = localStorage.getItem('navin');
-  if (saved) {
-    user = JSON.parse(saved);
-    document.getElementById('authGate').classList.add('hidden');
-    document.getElementById('app').style.display = 'grid';
-    load();
-  }
+// Like button interaction
+document.querySelectorAll('.post-action-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        if (this.textContent.includes('Like')) {
+            alert('❤️ Post liked! +1 Coin awarded!');
+            this.style.opacity = '0.6';
+        } else if (this.textContent.includes('Comment')) {
+            alert('💬 Comment modal would open');
+        } else if (this.textContent.includes('Share')) {
+            alert('↗️ Share modal would open');
+        }
+    });
 });
+
+// Group button interactions
+document.querySelectorAll('.group-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        if (this.textContent.includes('Join')) {
+            alert('✅ Group joined! Welcome aboard!');
+            this.textContent = '✓ Joined';
+            this.style.opacity = '0.6';
+        } else if (this.textContent.includes('View')) {
+            alert('📍 Opening group posts...');
+        }
+    });
+});
+
 </script>
 
 </body>
