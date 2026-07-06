@@ -18,14 +18,17 @@ function ensureSheetsExist() {
   let users = ss.getSheetByName(SHEET_USERS);
   if (!users) {
     users = ss.insertSheet(SHEET_USERS);
-    users.appendRow(['userId','email','passwordHash','name','joinDate','lastLogin','level','coins','totalHydration_L']);
-    users.getRange(1,1,1,9).setFontWeight('bold');
+    users.appendRow(['userId','email','passwordHash','name','joinDate','lastLogin','level','coins','totalHydration_L','avatarBase64']);
+    users.getRange(1,1,1,10).setFontWeight('bold');
   } else {
     const headers = users.getRange(1, 1, 1, users.getLastColumn()).getValues()[0];
     if (!headers.includes('level')) {
       users.getRange(1, users.getLastColumn() + 1).setValue('level');
       users.getRange(1, users.getLastColumn() + 1).setValue('coins');
       users.getRange(1, users.getLastColumn() + 1).setValue('totalHydration_L');
+    }
+    if (!headers.includes('avatarBase64')) {
+      users.getRange(1, users.getLastColumn() + 1).setValue('avatarBase64');
     }
   }
 
@@ -75,6 +78,7 @@ function processRequest(payload) {
   else if (action === 'updateProfile')  result = handleUpdateProfile(payload);
   else if (action === 'getFeed')        result = handleGetFeed(payload);
   else if (action === 'uploadPost')     result = handleUploadPost(payload);
+  else if (action === 'deletePost')     result = handleDeletePost(payload);
   else if (action === 'likePost')       result = handleLikePost(payload);
   else if (action === 'getMyFriends')   result = handleGetMyFriends(payload);
   else if (action === 'addFriend')      result = handleAddFriend(payload);
@@ -153,7 +157,7 @@ function handleSignup(body) {
   const passwordHash = hashPassword(password);
   const joinDate     = new Date().toISOString();
 
-  sheet.appendRow([userId, email.toLowerCase(), passwordHash, name, joinDate, joinDate, 'Movers', 0, 0]);
+  sheet.appendRow([userId, email.toLowerCase(), passwordHash, name, joinDate, joinDate, 'Movers', 0, 0, '']);
 
   const token = generateToken(userId, email);
   return { success: true, message: 'Signup berhasil!', token, userId, name, email: email.toLowerCase() };
@@ -185,7 +189,8 @@ function handleLogin(body) {
         name: row[3],
         email: row[1],
         level: row[6] || 'Movers',
-        coins: row[7] || 0
+        coins: row[7] || 0,
+        avatarBase64: row[9] || ''
       };
     }
   }
@@ -213,7 +218,8 @@ function handleGetMyProfile(body) {
           joinDate: usersData[i][4],
           level: usersData[i][6] || 'Movers',
           coins: usersData[i][7] || 0,
-          totalHydration_L: usersData[i][8] || 0
+          totalHydration_L: usersData[i][8] || 0,
+          avatarBase64: usersData[i][9] || ''
         }
       };
     }
@@ -224,7 +230,7 @@ function handleGetMyProfile(body) {
 
 // ── Update Profile ────────────────────────────────────────
 function handleUpdateProfile(body) {
-  const { token, userId, name } = body;
+  const { token, userId, name, avatarBase64 } = body;
   if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -233,7 +239,8 @@ function handleUpdateProfile(body) {
 
   for (let i = 1; i < usersData.length; i++) {
     if (usersData[i][0] === userId) {
-      usersSheet.getRange(i + 1, 4).setValue(name);
+      if (name) usersSheet.getRange(i + 1, 4).setValue(name);
+      if (avatarBase64) usersSheet.getRange(i + 1, 10).setValue(avatarBase64.substring(0, 40000));
       return { success: true, message: 'Profil diupdate!' };
     }
   }
@@ -261,7 +268,7 @@ function handleUploadPost(body) {
   }
 
   const postId = 'POST_' + new Date().getTime();
-  const photoRef = photoBase64 && photoBase64.length > 0 ? photoBase64.substring(0, 1000) : '';
+  const photoRef = photoBase64 && photoBase64.length > 0 ? photoBase64.substring(0, 40000) : '';
 
   postsSheet.appendRow([
     postId,
@@ -287,6 +294,28 @@ function handleUploadPost(body) {
   }
 
   return { success: true, message: 'Post berhasil dibuat! +20 coins', postId };
+}
+
+// ── Delete Post ────────────────────────────────────────────
+function handleDeletePost(body) {
+  const { token, userId, postId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const postsSheet = ss.getSheetByName(SHEET_POSTS);
+  const postsData = postsSheet.getDataRange().getValues();
+
+  for (let i = 1; i < postsData.length; i++) {
+    if (postsData[i][0] === postId) {
+      if (postsData[i][1] !== userId) {
+        return { success: false, message: 'Hanya pemilik post yang bisa menghapus.' };
+      }
+      postsSheet.deleteRow(i + 1);
+      return { success: true, message: 'Post dihapus.' };
+    }
+  }
+
+  return { success: false, message: 'Post tidak ditemukan.' };
 }
 
 // ── Like Post ─────────────────────────────────────────────
@@ -514,7 +543,7 @@ function handleGetGroups(body) {
     }
   }
 
-  if (!groupsSheet) return { success: true, groups: [], canCreate: userLevel === 'Agent Of Change' };
+  if (!groupsSheet) return { success: true, groups: [], canCreate: userLevel.toUpperCase() === 'AOC' };
 
   const groupsData = groupsSheet.getDataRange().getValues();
   const groups = [];
@@ -528,7 +557,7 @@ function handleGetGroups(body) {
     });
   }
 
-  return { success: true, groups, canCreate: userLevel === 'Agent Of Change' };
+  return { success: true, groups, canCreate: userLevel.toUpperCase() === 'AOC' };
 }
 
 // ── Create Group (AOC only) ────────────────────────────────
@@ -549,8 +578,8 @@ function handleCreateGroup(body) {
     }
   }
 
-  if (userLevel !== 'Agent Of Change') {
-    return { success: false, message: 'Hanya Agent Of Change yang bisa membuat group.' };
+  if (userLevel.toUpperCase() !== 'AOC') {
+    return { success: false, message: 'Hanya AOC yang bisa membuat group.' };
   }
 
   const groupId = 'GRP_' + new Date().getTime();
