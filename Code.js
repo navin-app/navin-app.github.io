@@ -9,6 +9,7 @@ const SHEET_POSTS    = 'Posts';
 const SHEET_FRIENDS  = 'Friends';
 const SHEET_GROUPS   = 'Groups';
 const SHEET_EVENTS   = 'Events';
+const SHEET_CHATS    = 'Chats';
 
 // ── Ensure sheets exist ────────────────────────────────────
 function ensureSheetsExist() {
@@ -59,6 +60,13 @@ function ensureSheetsExist() {
     events.appendRow(['eventId','groupId','title','date','hashtag','createdAt']);
     events.getRange(1,1,1,6).setFontWeight('bold');
   }
+
+  let chats = ss.getSheetByName(SHEET_CHATS);
+  if (!chats) {
+    chats = ss.insertSheet(SHEET_CHATS);
+    chats.appendRow(['chatKey','chatType','senderId','senderName','message','timestamp']);
+    chats.getRange(1,1,1,6).setFontWeight('bold');
+  }
   } catch (err) {
     Logger.log('Sheet initialization error: ' + err.message);
   }
@@ -87,6 +95,8 @@ function processRequest(payload) {
   else if (action === 'updateHydration')result = handleUpdateHydration(payload);
   else if (action === 'getGroups')      result = handleGetGroups(payload);
   else if (action === 'createGroup')    result = handleCreateGroup(payload);
+  else if (action === 'sendChat')       result = handleSendChat(payload);
+  else if (action === 'getChat')        result = handleGetChat(payload);
   else                                  result = { success: false, message: 'Unknown action: ' + action };
 
   return result;
@@ -637,6 +647,69 @@ function handleCreateGroup(body) {
   groupsSheet.appendRow([groupId, userId, groupName, userId, new Date().toISOString()]);
 
   return { success: true, message: 'Grup dibuat!', groupId };
+}
+
+// ── Chat: kunci konsisten untuk friend chat (2 arah sama) ──
+function friendChatKey(a, b) {
+  return [a, b].sort().join('|');
+}
+
+// ── Send Chat Message ──────────────────────────────────────
+function handleSendChat(body) {
+  const { token, userId, chatType, targetId, message } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+  if (!message || !message.trim()) return { success: false, message: 'Pesan kosong.' };
+  if (!targetId) return { success: false, message: 'Target chat tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const chatsSheet = ss.getSheetByName(SHEET_CHATS);
+  const usersSheet = ss.getSheetByName(SHEET_USERS);
+
+  // Ambil nama pengirim
+  const usersData = usersSheet.getDataRange().getValues();
+  let senderName = 'Unknown';
+  for (let i = 1; i < usersData.length; i++) {
+    if (usersData[i][0] === userId) { senderName = usersData[i][3]; break; }
+  }
+
+  const type = chatType === 'group' ? 'group' : 'friend';
+  const chatKey = type === 'group' ? targetId : friendChatKey(userId, targetId);
+  const timestamp = new Date().toISOString();
+
+  chatsSheet.appendRow([chatKey, type, userId, senderName, message.trim().substring(0, 500), timestamp]);
+
+  return { success: true, message: 'Terkirim', sent: { senderId: userId, senderName, message: message.trim().substring(0, 500), timestamp } };
+}
+
+// ── Get Chat Messages ──────────────────────────────────────
+function handleGetChat(body) {
+  const { token, userId, chatType, targetId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+  if (!targetId) return { success: false, message: 'Target chat tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const chatsSheet = ss.getSheetByName(SHEET_CHATS);
+  if (!chatsSheet) return { success: true, messages: [] };
+
+  const type = chatType === 'group' ? 'group' : 'friend';
+  const chatKey = type === 'group' ? targetId : friendChatKey(userId, targetId);
+
+  const chatsData = chatsSheet.getDataRange().getValues();
+  const messages = [];
+  // Scan dari bawah (terbaru), ambil max 50, lalu balik urutan
+  for (let i = chatsData.length - 1; i >= 1 && messages.length < 50; i--) {
+    if (chatsData[i][0] === chatKey && chatsData[i][1] === type) {
+      messages.push({
+        senderId: chatsData[i][2],
+        senderName: chatsData[i][3],
+        message: chatsData[i][4],
+        timestamp: chatsData[i][5]
+      });
+    }
+  }
+  messages.reverse();
+
+  return { success: true, messages };
 }
 
 // ── Helpers ───────────────────────────────────────────────

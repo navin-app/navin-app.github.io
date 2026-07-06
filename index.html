@@ -1019,7 +1019,7 @@ body{
                         </div>
                         <div class="chat-messages" id="chatMessages"></div>
                         <div class="chat-input-area">
-                            <input type="text" class="chat-input" id="chatInput" placeholder="Type message...">
+                            <input type="text" class="chat-input" id="chatInput" placeholder="Type message..." onkeydown="if(event.key==='Enter')sendMessage()">
                             <button class="chat-send-btn" onclick="sendMessage()">➤</button>
                         </div>
                     </div>
@@ -1623,57 +1623,144 @@ function addHydration() {
     });
 }
 
+// ─── CHAT (persisten di Sheets, friend & group) ─────────────
+let myGroups = [];
+let selectedChat = null;   // { type: 'friend'|'group', targetId, name }
+let lastChatSignature = '';
+
 function renderChatFriends(friendsData) {
     chatFriends = friendsData || [];
+    renderChatList();
+}
+
+function renderChatList() {
     const list = document.getElementById('chatList');
     if (!list) return;
-    list.innerHTML = chatFriends.map((f, i) => `
-        <div class="chat-item ${i === 0 ? 'active' : ''}" onclick="selectChatFriend(${i}, '${f.friendId}', '${f.name}')">
+
+    const items = [
+        ...chatFriends.map(f => ({ type: 'friend', targetId: f.friendId, name: f.name, icon: f.name.charAt(0).toUpperCase() })),
+        ...myGroups.map(g => ({ type: 'group', targetId: g.groupId, name: g.name, icon: '👥' }))
+    ];
+
+    if (items.length === 0) {
+        list.innerHTML = '<div class="chat-item"><div class="chat-item-preview">Add friend dulu untuk mulai chat</div></div>';
+        return;
+    }
+
+    list.innerHTML = items.map(item => `
+        <div class="chat-item ${selectedChat && selectedChat.targetId === item.targetId ? 'active' : ''}"
+             data-target="${item.targetId}"
+             onclick="selectChat('${item.type}', '${item.targetId}', '${item.name.replace(/'/g, "\\'")}')">
             <div class="chat-item-header">
-                <div class="chat-item-avatar">${f.name.charAt(0)}</div>
-                <div class="chat-item-name">${f.name}</div>
+                <div class="chat-item-avatar">${item.icon}</div>
+                <div class="chat-item-name">${item.name}${item.type === 'group' ? ' (Group)' : ''}</div>
             </div>
-            <div class="chat-item-preview">Click to chat</div>
+            <div class="chat-item-preview">Klik untuk chat</div>
         </div>
     `).join('');
-    if (chatFriends.length > 0) {
-        selectChatFriend(0, chatFriends[0].friendId, chatFriends[0].name);
+
+    // Auto-select chat pertama jika belum ada yang dipilih
+    if (!selectedChat && items.length > 0) {
+        selectChat(items[0].type, items[0].targetId, items[0].name);
     }
 }
 
-function selectChatFriend(index, friendId, name) {
-    selectedChatFriend = { friendId, name };
-    document.querySelectorAll('.chat-item').forEach((el, i) => {
-        el.classList.toggle('active', i === index);
+function selectChat(type, targetId, name) {
+    selectedChat = { type, targetId, name };
+    lastChatSignature = '';
+    document.querySelectorAll('.chat-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.target === targetId);
     });
-    document.getElementById('chatFriendName').textContent = name;
-    document.getElementById('chatMessages').innerHTML = `
-        <div class="message received">
-            <div class="message-bubble">Hey! 👋</div>
-        </div>
-    `;
+    document.getElementById('chatFriendName').textContent = name + (type === 'group' ? ' 👥' : '');
+    document.getElementById('chatMessages').innerHTML = '<div class="loading">Memuat pesan...</div>';
+    loadChatMessages();
+}
+
+function loadChatMessages() {
+    if (!selectedChat) return;
+    const chat = selectedChat;
+    apiCall('getChat', { chatType: chat.type, targetId: chat.targetId }).then(data => {
+        // User mungkin sudah pindah chat saat request berjalan
+        if (!selectedChat || selectedChat.targetId !== chat.targetId) return;
+        if (!data.success) return;
+        renderChatMessages(data.messages || []);
+    });
+}
+
+function renderChatMessages(messages) {
+    const box = document.getElementById('chatMessages');
+    if (!box) return;
+
+    // Hindari re-render (dan reset scroll) jika tidak ada pesan baru
+    const signature = messages.length + '_' + (messages.length ? messages[messages.length - 1].timestamp : '');
+    if (signature === lastChatSignature) return;
+    lastChatSignature = signature;
+
+    if (messages.length === 0) {
+        box.innerHTML = '<div class="loading">Belum ada pesan. Mulai percakapan! 👋</div>';
+        return;
+    }
+
+    box.innerHTML = messages.map(m => {
+        const sent = m.senderId === currentUser.userId;
+        const showName = !sent && selectedChat.type === 'group';
+        return `
+        <div class="message ${sent ? 'sent' : 'received'}">
+            <div class="message-bubble">
+                ${showName ? `<div style="font-size:10px;font-weight:700;color:var(--yellow);margin-bottom:4px;">${m.senderName}</div>` : ''}
+                ${m.message}
+                <div style="font-size:9px;opacity:.5;margin-top:4px;text-align:right;">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+        </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
 }
 
 function sendMessage() {
-    if (!selectedChatFriend) return;
+    if (!selectedChat) return alert('Pilih teman atau group dulu.');
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     if (!text) return;
 
-    const messages = document.getElementById('chatMessages');
-    messages.innerHTML += `
+    input.value = '';
+
+    // Optimistic render: tampilkan langsung
+    const box = document.getElementById('chatMessages');
+    box.innerHTML += `
         <div class="message sent">
-            <div class="message-bubble">${text}</div>
+            <div class="message-bubble">${text}<div style="font-size:9px;opacity:.5;margin-top:4px;text-align:right;">⏳</div></div>
         </div>
     `;
-    input.value = '';
-    messages.scrollTop = messages.scrollHeight;
+    box.scrollTop = box.scrollHeight;
+
+    apiCall('sendChat', { chatType: selectedChat.type, targetId: selectedChat.targetId, message: text }).then(data => {
+        if (data.success) {
+            lastChatSignature = '';
+            loadChatMessages();
+        } else {
+            alert(data.message || 'Gagal mengirim pesan');
+        }
+    });
 }
+
+// Polling: refresh chat aktif setiap 10 detik HANYA saat tab Chat terbuka
+setInterval(() => {
+    const chatTab = document.getElementById('chat');
+    if (selectedChat && chatTab && chatTab.classList.contains('active')) {
+        loadChatMessages();
+    }
+}, 10000);
 
 function loadGroups() {
     apiCall('getGroups').then(data => {
         if (data.success) {
+            myGroups = (data.groups || []).filter(g =>
+                g.creatorId === currentUser.userId || (g.members || []).includes(currentUser.userId)
+            );
+            renderChatList();
+
             const container = document.getElementById('groupsList');
+            if (!container) return;
             if (!data.groups || data.groups.length === 0) {
                 container.innerHTML = '<div class="loading">No groups yet</div>';
             } else {
@@ -1684,13 +1771,23 @@ function loadGroups() {
                             <div class="group-tag">Members: ${g.members.length}</div>
                         </div>
                         <div class="group-actions">
-                            <button class="group-btn">Join</button>
+                            <button class="group-btn" onclick="openGroupChat('${g.groupId}', '${g.name.replace(/'/g, "\\'")}')">💬 Chat</button>
                         </div>
                     </div>
                 `).join('');
             }
         }
     });
+}
+
+function openGroupChat(groupId, name) {
+    // Pindah ke tab Chat lalu buka chat group tersebut
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('chat').classList.add('active');
+    const chatBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.includes('Chat'));
+    if (chatBtn) chatBtn.classList.add('active');
+    selectChat('group', groupId, name);
 }
 
 function createGroupPrompt() {
