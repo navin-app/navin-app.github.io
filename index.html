@@ -1159,14 +1159,13 @@ function login() {
             if (data.success) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('userId', data.userId);
-                currentUser = { token: data.token, userId: data.userId };
-                loadApp();
+                location.reload();
             } else {
                 alert(data.message || 'Login failed');
             }
         } catch (e) {
-            console.error('Parse error:', text);
-            alert('API error: ' + text);
+            console.error('Parse error:', text, e);
+            alert('API error (parse): ' + e.message);
         }
     }).catch(err => alert('Network error: ' + err.message));
 }
@@ -1185,14 +1184,13 @@ function signup() {
             if (data.success) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('userId', data.userId);
-                currentUser = { token: data.token, userId: data.userId };
-                loadApp();
+                location.reload();
             } else {
                 alert(data.message || 'Signup failed');
             }
         } catch (e) {
-            console.error('Parse error:', text);
-            alert('API error: ' + text);
+            console.error('Parse error:', text, e);
+            alert('API error (parse): ' + e.message);
         }
     }).catch(err => alert('Network error: ' + err.message));
 }
@@ -1214,9 +1212,12 @@ function loadApp() {
 
 function startHeroImageRotation() {
     const banner = document.getElementById('heroBanner');
+    if (!banner) return;
     setInterval(() => {
+        const el = document.getElementById('heroBanner');
+        if (!el) return;
         currentImageIndex = (currentImageIndex + 1) % HERO_IMAGES.length;
-        banner.style.backgroundImage = HERO_IMAGES[currentImageIndex];
+        el.style.backgroundImage = HERO_IMAGES[currentImageIndex];
     }, 3000);
     banner.style.backgroundImage = HERO_IMAGES[0];
 }
