@@ -565,23 +565,52 @@ body{
 .message{
     display:flex;
     gap:8px;
-    margin-bottom:8px;
+    margin-bottom:12px;
+    align-items:flex-end;
 }
 
 .message.sent{
     justify-content:flex-end;
 }
 
-.message-bubble{
+.message-avatar{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:var(--blue);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    font-weight:700;
+    flex-shrink:0;
+}
+
+.message-container{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
     max-width:70%;
+}
+
+.message-sender-name{
+    font-size:11px;
+    opacity:.6;
+    font-weight:600;
+    padding:0 12px;
+}
+
+.message-bubble{
     padding:10px 14px;
     border-radius:12px;
     font-size:13px;
     line-height:1.5;
+    word-break:break-word;
 }
 
 .message.received .message-bubble{
-    background:rgba(2,102,255,.15);
+    background:rgba(2,102,255,.2);
     color:white;
 }
 
@@ -1703,15 +1732,34 @@ function renderChatMessages(messages) {
 
     box.innerHTML = messages.map(m => {
         const sent = m.senderId === currentUser.userId;
-        const showName = !sent && selectedChat.type === 'group';
-        return `
-        <div class="message ${sent ? 'sent' : 'received'}">
-            <div class="message-bubble">
-                ${showName ? `<div style="font-size:10px;font-weight:700;color:var(--yellow);margin-bottom:4px;">${m.senderName}</div>` : ''}
-                ${m.message}
-                <div style="font-size:9px;opacity:.5;margin-top:4px;text-align:right;">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
-            </div>
-        </div>`;
+        const isFriendChat = selectedChat.type === 'friend';
+        const isGroupChat = selectedChat.type === 'group';
+
+        if (sent) {
+            // Pesan sendiri di kanan, tanpa avatar
+            return `
+            <div class="message sent">
+                <div class="message-container">
+                    <div class="message-bubble">
+                        ${m.message}
+                        <div style="font-size:9px;opacity:.6;margin-top:4px;text-align:right;">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+                    </div>
+                </div>
+            </div>`;
+        } else {
+            // Pesan diterima di kiri dengan avatar + nama (terutama penting di group)
+            return `
+            <div class="message received">
+                <div class="message-avatar">${m.senderName.charAt(0).toUpperCase()}</div>
+                <div class="message-container">
+                    ${isGroupChat ? `<div class="message-sender-name">${m.senderName}</div>` : ''}
+                    <div class="message-bubble">
+                        ${m.message}
+                        <div style="font-size:9px;opacity:.6;margin-top:4px;">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+                    </div>
+                </div>
+            </div>`;
+        }
     }).join('');
     box.scrollTop = box.scrollHeight;
 }
@@ -1768,14 +1816,78 @@ function loadGroups() {
                     <div class="group-card">
                         <div class="group-header">
                             <div class="group-name">${g.name}</div>
-                            <div class="group-tag">Members: ${g.members.length}</div>
+                            <div class="group-tag">👥 ${g.members.length}</div>
                         </div>
                         <div class="group-actions">
                             <button class="group-btn" onclick="openGroupChat('${g.groupId}', '${g.name.replace(/'/g, "\\'")}')">💬 Chat</button>
+                            <button class="group-btn" onclick="showGroupMembers('${g.groupId}', '${g.name.replace(/'/g, "\\'")}')">ℹ️ Info</button>
                         </div>
                     </div>
                 `).join('');
             }
+        }
+    });
+}
+
+function showGroupMembers(groupId, name) {
+    apiCall('getGroupMembers', { groupId }).then(data => {
+        if (!data.success) return alert(data.message);
+        const info = data.groupInfo;
+        const members = data.members || [];
+
+        let html = `
+            <div style="background:rgba(2,102,255,.1);padding:16px;border-radius:8px;margin-bottom:16px;">
+                <div style="font-size:18px;font-weight:700;margin-bottom:8px;">${info.name}</div>
+                <div style="font-size:12px;opacity:.7;">
+                    👤 Pembuat: <strong>${info.creatorName}</strong><br>
+                    📅 Dibuat: ${new Date(info.createdAt).toLocaleDateString('id-ID')}
+                </div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Anggota (${members.length}):</div>
+                ${members.map(m => `
+                    <div style="background:rgba(255,255,255,.05);padding:10px;border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-weight:600;">${m.name}</div>
+                            <div style="font-size:11px;opacity:.6;">${m.level}</div>
+                        </div>
+                        ${info.isCreator ? `<button class="group-btn" style="padding:4px 10px;font-size:11px;" onclick="alert('Fitur remove belum ada')">Hapus</button>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+            ${info.isCreator ? `
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(239,251,0,.2);">
+                    <button class="upload-btn" style="width:100%;" onclick="inviteFriendToGroup('${groupId}')">👥 Invite Teman</button>
+                </div>
+            ` : ''}
+        `;
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
+        modal.innerHTML = `
+            <div style="background:#1a1a1a;padding:24px;border-radius:12px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;">
+                ${html}
+                <button class="logout-btn" style="width:100%;margin-top:16px;" onclick="this.closest('[style*=\\\"position:fixed\\\"]').remove()">Tutup</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    });
+}
+
+function inviteFriendToGroup(groupId) {
+    const friendId = prompt('Masukkan User ID atau nama teman yang akan diundang:');
+    if (!friendId) return;
+
+    // Cari di friends list
+    const friend = friends.find(f => f.friendId === friendId || f.name.toLowerCase() === friendId.toLowerCase());
+    if (!friend) return alert('Teman tidak ditemukan di list friend Anda. Tambahkan sebagai friend dulu.');
+
+    apiCall('inviteToGroup', { groupId, friendUserId: friend.friendId }).then(data => {
+        if (data.success) {
+            alert(data.message);
+            loadGroups();
+        } else {
+            alert(data.message || 'Gagal mengundang teman');
         }
     });
 }

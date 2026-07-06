@@ -95,6 +95,8 @@ function processRequest(payload) {
   else if (action === 'updateHydration')result = handleUpdateHydration(payload);
   else if (action === 'getGroups')      result = handleGetGroups(payload);
   else if (action === 'createGroup')    result = handleCreateGroup(payload);
+  else if (action === 'inviteToGroup')  result = handleInviteToGroup(payload);
+  else if (action === 'getGroupMembers')result = handleGetGroupMembers(payload);
   else if (action === 'sendChat')       result = handleSendChat(payload);
   else if (action === 'getChat')        result = handleGetChat(payload);
   else                                  result = { success: false, message: 'Unknown action: ' + action };
@@ -647,6 +649,82 @@ function handleCreateGroup(body) {
   groupsSheet.appendRow([groupId, userId, groupName, userId, new Date().toISOString()]);
 
   return { success: true, message: 'Grup dibuat!', groupId };
+}
+
+// ── Invite Friend to Group (AOC creator only) ──────────────
+function handleInviteToGroup(body) {
+  const { token, userId, groupId, friendUserId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+  if (!friendUserId) return { success: false, message: 'Target friend tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const groupsSheet = ss.getSheetByName(SHEET_GROUPS);
+  if (!groupsSheet) return { success: false, message: 'Grup tidak ditemukan.' };
+
+  const groupsData = groupsSheet.getDataRange().getValues();
+  let groupRow = -1, groupMembers = [];
+  for (let i = 1; i < groupsData.length; i++) {
+    if (groupsData[i][0] === groupId) {
+      if (groupsData[i][1] !== userId) {
+        return { success: false, message: 'Hanya pembuat grup yang bisa invite teman.' };
+      }
+      groupRow = i + 1;
+      groupMembers = (groupsData[i][3] || '').split(',').filter(m => m.length > 0);
+      break;
+    }
+  }
+
+  if (groupRow === -1) return { success: false, message: 'Grup tidak ditemukan.' };
+  if (groupMembers.includes(friendUserId)) {
+    return { success: false, message: 'User sudah member grup ini.' };
+  }
+
+  groupMembers.push(friendUserId);
+  groupsSheet.getRange(groupRow, 4).setValue(groupMembers.join(','));
+
+  return { success: true, message: 'Teman ditambahkan ke grup!' };
+}
+
+// ── Get Group Members ──────────────────────────────────────
+function handleGetGroupMembers(body) {
+  const { token, userId, groupId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const groupsSheet = ss.getSheetByName(SHEET_GROUPS);
+  const usersSheet = ss.getSheetByName(SHEET_USERS);
+
+  if (!groupsSheet) return { success: true, groupInfo: {}, members: [] };
+
+  const groupsData = groupsSheet.getDataRange().getValues();
+  const usersData = usersSheet.getDataRange().getValues();
+  const userMap = {};
+  for (let i = 1; i < usersData.length; i++) {
+    userMap[usersData[i][0]] = { name: usersData[i][3], level: usersData[i][6] || 'Movers' };
+  }
+
+  for (let i = 1; i < groupsData.length; i++) {
+    if (groupsData[i][0] === groupId) {
+      const creatorId = groupsData[i][1];
+      const memberIds = (groupsData[i][3] || '').split(',').filter(m => m.length > 0);
+      const members = memberIds.map(mId => ({ userId: mId, name: userMap[mId]?.name || 'Unknown', level: userMap[mId]?.level || 'Movers' }));
+
+      return {
+        success: true,
+        groupInfo: {
+          groupId: groupsData[i][0],
+          name: groupsData[i][2],
+          creatorId,
+          creatorName: userMap[creatorId]?.name || 'Unknown',
+          createdAt: groupsData[i][4],
+          isCreator: creatorId === userId
+        },
+        members
+      };
+    }
+  }
+
+  return { success: false, message: 'Grup tidak ditemukan.' };
 }
 
 // ── Chat: kunci konsisten untuk friend chat (2 arah sama) ──
