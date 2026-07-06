@@ -1081,7 +1081,7 @@ body{
 
 <script>
 
-const API_BASE = 'https://script.google.com/macros/s/AKfycbzcPWUx0HBCGZcFJhleWuLmvZv_9ZGHI2Jfl_EAB8jjwQ8WXfc6nIL_9Wcko6xQ0gBEbg/exec';
+const API_BASE = 'https://script.google.com/macros/s/AKfycbw_b1AVyv2zJMrvg1E-e1pPw02oKRe9USwbtqb_cX4fb1L0aB99kxjrG5vCDU5JcjORXw/exec';
 const HERO_IMAGES = [
     'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%27%230266FF%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E🚴 Cycling Day%3C/text%3E%3C/svg%3E)',
     'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%27%23003EB5%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E💧 Hydration Goal%3C/text%3E%3C/svg%3E)',
@@ -1150,10 +1150,9 @@ function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    fetch(API_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'login', email, password })
+    fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({ action: 'login', email, password })), {
+        method: 'GET',
+        redirect: 'follow'
     }).then(r => r.text()).then(text => {
         try {
             const data = JSON.parse(text);
@@ -1177,10 +1176,9 @@ function signup() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    fetch(API_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'signup', name, email, password })
+    fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({ action: 'signup', name, email, password })), {
+        method: 'GET',
+        redirect: 'follow'
     }).then(r => r.text()).then(text => {
         try {
             const data = JSON.parse(text);
@@ -1328,15 +1326,15 @@ function apiCall(action, data = {}) {
     if (!API_BASE) {
         return Promise.resolve(mockApiCall(action, data));
     }
-    return fetch(API_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-            action,
-            token: currentUser?.token || '',
-            userId: currentUser?.userId || '',
-            ...data
-        })
+    const payload = JSON.stringify({
+        action,
+        token: currentUser?.token || '',
+        userId: currentUser?.userId || '',
+        ...data
+    });
+    return fetch(API_BASE + '?payload=' + encodeURIComponent(payload), {
+        method: 'GET',
+        redirect: 'follow'
     }).then(r => r.text()).then(text => {
         try {
             return JSON.parse(text);
