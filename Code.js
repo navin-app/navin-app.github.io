@@ -91,9 +91,6 @@ function processRequest(payload) {
 function doGet(e) {
   const output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
-  output.addHeader('Access-Control-Allow-Origin', '*');
-  output.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  output.addHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   try {
     const payload = e.parameter && e.parameter.payload
@@ -113,9 +110,6 @@ function doGet(e) {
 function doPost(e) {
   const output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
-  output.addHeader('Access-Control-Allow-Origin', '*');
-  output.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  output.addHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   try {
     let payload = {};
