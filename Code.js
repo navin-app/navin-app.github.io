@@ -61,38 +61,72 @@ function ensureSheetsExist() {
   }
 }
 
-// ── doGet — main entry point ───────────────────────────────
+// ── Process Request ────────────────────────────────────────
+function processRequest(payload) {
+  ensureSheetsExist();
+
+  const action = payload.action;
+  let result;
+
+  if      (action === 'ping')           result = { success: true, message: 'NAVIN v2 online' };
+  else if (action === 'signup')         result = handleSignup(payload);
+  else if (action === 'login')          result = handleLogin(payload);
+  else if (action === 'getMyProfile')   result = handleGetMyProfile(payload);
+  else if (action === 'updateProfile')  result = handleUpdateProfile(payload);
+  else if (action === 'getFeed')        result = handleGetFeed(payload);
+  else if (action === 'uploadPost')     result = handleUploadPost(payload);
+  else if (action === 'likePost')       result = handleLikePost(payload);
+  else if (action === 'getMyFriends')   result = handleGetMyFriends(payload);
+  else if (action === 'addFriend')      result = handleAddFriend(payload);
+  else if (action === 'addFriendByUserId') result = handleAddFriendByUserId(payload);
+  else if (action === 'updateHydration')result = handleUpdateHydration(payload);
+  else if (action === 'getGroups')      result = handleGetGroups(payload);
+  else if (action === 'createGroup')    result = handleCreateGroup(payload);
+  else                                  result = { success: false, message: 'Unknown action: ' + action };
+
+  return result;
+}
+
+// ── doGet ──────────────────────────────────────────────────
 function doGet(e) {
   const output = ContentService.createTextOutput();
   output.setMimeType(ContentService.MimeType.JSON);
+  output.addHeader('Access-Control-Allow-Origin', '*');
+  output.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.addHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   try {
-    // Auto-initialize sheets on first request
-    ensureSheetsExist();
-
     const payload = e.parameter && e.parameter.payload
       ? JSON.parse(decodeURIComponent(e.parameter.payload))
       : { action: 'ping' };
 
-    const action = payload.action;
-    let result;
+    const result = processRequest(payload);
+    output.setContent(JSON.stringify(result));
+  } catch (err) {
+    output.setContent(JSON.stringify({ success: false, message: 'Server error: ' + err.message }));
+  }
 
-    if      (action === 'ping')           result = { success: true, message: 'NAVIN v2 online' };
-    else if (action === 'signup')         result = handleSignup(payload);
-    else if (action === 'login')          result = handleLogin(payload);
-    else if (action === 'getMyProfile')   result = handleGetMyProfile(payload);
-    else if (action === 'updateProfile')  result = handleUpdateProfile(payload);
-    else if (action === 'getFeed')        result = handleGetFeed(payload);
-    else if (action === 'uploadPost')     result = handleUploadPost(payload);
-    else if (action === 'likePost')       result = handleLikePost(payload);
-    else if (action === 'getMyFriends')   result = handleGetMyFriends(payload);
-    else if (action === 'addFriend')      result = handleAddFriend(payload);
-    else if (action === 'addFriendByUserId') result = handleAddFriendByUserId(payload);
-    else if (action === 'updateHydration')result = handleUpdateHydration(payload);
-    else if (action === 'getGroups')      result = handleGetGroups(payload);
-    else if (action === 'createGroup')    result = handleCreateGroup(payload);
-    else                                  result = { success: false, message: 'Unknown action: ' + action };
+  return output;
+}
 
+// ── doPost ─────────────────────────────────────────────────
+function doPost(e) {
+  const output = ContentService.createTextOutput();
+  output.setMimeType(ContentService.MimeType.JSON);
+  output.addHeader('Access-Control-Allow-Origin', '*');
+  output.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  output.addHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  try {
+    let payload = {};
+
+    if (e.postData && e.postData.contents) {
+      payload = JSON.parse(e.postData.contents);
+    } else if (e.parameter && e.parameter.payload) {
+      payload = JSON.parse(decodeURIComponent(e.parameter.payload));
+    }
+
+    const result = processRequest(payload);
     output.setContent(JSON.stringify(result));
   } catch (err) {
     output.setContent(JSON.stringify({ success: false, message: 'Server error: ' + err.message }));
