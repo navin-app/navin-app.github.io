@@ -33,36 +33,35 @@ body{
     overflow-x:hidden;
 }
 
-/* APP LAYOUT */
-
 .app-container{
     display:flex;
+    flex-direction:column;
     height:100vh;
     background:var(--black);
 }
-
-/* TOP NAV */
 
 .topbar{
     position:sticky;
     top:0;
     z-index:50;
-    
     display:flex;
     justify-content:space-between;
     align-items:center;
     padding:16px 24px;
-    
     background:rgba(5,5,5,.95);
     backdrop-filter:blur(12px);
     border-bottom:2px solid rgba(239,251,0,.3);
 }
 
 .logo-nav{
-    font-size:32px;
-    font-weight:900;
-    color:var(--yellow);
-    letter-spacing:-3px;
+    height:40px;
+    display:flex;
+    align-items:center;
+}
+
+.logo-nav img{
+    height:40px;
+    object-fit:contain;
 }
 
 .user-status{
@@ -103,8 +102,6 @@ body{
     color:var(--black);
 }
 
-/* MAIN CONTENT */
-
 .main-content{
     flex:1;
     display:flex;
@@ -117,8 +114,6 @@ body{
     overflow-y:auto;
     padding:24px;
 }
-
-/* TAB NAVIGATION */
 
 .tab-nav{
     display:flex;
@@ -166,11 +161,9 @@ body{
     to{ opacity:1; }
 }
 
-/* HOME TAB */
-
 .hero-banner{
     width:100%;
-    height:240px;
+    height:280px;
     background:linear-gradient(135deg, #0266FF 0%, #003EB5 100%);
     border-radius:24px;
     padding:32px;
@@ -181,6 +174,9 @@ body{
     color:white;
     position:relative;
     overflow:hidden;
+    background-size:cover;
+    background-position:center;
+    transition:background-image 0.6s ease;
 }
 
 .hero-banner::before{
@@ -235,8 +231,6 @@ body{
     font-weight:900;
     letter-spacing:-2px;
 }
-
-/* FEED */
 
 .feed-container{
     max-width:600px;
@@ -363,8 +357,6 @@ body{
     border-color:rgba(239,251,0,.6);
 }
 
-/* COIN BADGE */
-
 .coin-badge{
     display:inline-block;
     background:rgba(239,251,0,.2);
@@ -374,8 +366,6 @@ body{
     font-size:11px;
     font-weight:900;
 }
-
-/* GROUPS TAB */
 
 .groups-container{
     max-width:800px;
@@ -482,18 +472,6 @@ body{
 .group-btn:hover{
     background:rgba(2,102,255,.2);
 }
-
-.aoc-only-badge{
-    display:inline-block;
-    background:rgba(239,251,0,.2);
-    color:var(--yellow);
-    padding:4px 8px;
-    border-radius:4px;
-    font-size:10px;
-    font-weight:900;
-}
-
-/* CHAT TAB */
 
 .chat-container{
     display:flex;
@@ -654,8 +632,6 @@ body{
     background:#FFFF33;
 }
 
-/* PROFILE TAB */
-
 .profile-container{
     max-width:600px;
     margin:0 auto;
@@ -767,7 +743,7 @@ body{
     font-weight:700;
 }
 
-.edit-btn{
+.edit-btn, .logout-btn{
     width:100%;
     padding:12px;
     background:var(--blue);
@@ -780,8 +756,16 @@ body{
     transition:all 0.3s ease;
 }
 
+.logout-btn{
+    background:#CC0000;
+}
+
 .edit-btn:hover{
     background:#0052CC;
+}
+
+.logout-btn:hover{
+    background:#990000;
 }
 
 .hydration-progress{
@@ -796,25 +780,133 @@ body{
 .hydration-progress-bar{
     height:100%;
     background:linear-gradient(90deg, #00D9FF, var(--blue));
-    width:65%;
     transition:width 0.3s ease;
 }
 
-/* RESPONSIVE */
+.upload-section{
+    background:var(--light-gray);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:24px;
+    border:1px solid rgba(239,251,0,.2);
+}
+
+.upload-label{
+    display:block;
+    font-size:12px;
+    font-weight:700;
+    color:var(--yellow);
+    margin-bottom:12px;
+    text-transform:uppercase;
+}
+
+.upload-input{
+    width:100%;
+    padding:12px;
+    background:var(--dark-gray);
+    border:1px solid rgba(239,251,0,.3);
+    border-radius:10px;
+    color:white;
+    margin-bottom:12px;
+    font-family:'Space Grotesk',sans-serif;
+}
+
+.upload-btn{
+    width:100%;
+    padding:12px;
+    background:linear-gradient(135deg, var(--blue), #003EB5);
+    border:none;
+    border-radius:10px;
+    color:white;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.3s ease;
+}
+
+.upload-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(2,102,255,.3);
+}
+
+.auth-container{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    background:var(--black);
+}
+
+.auth-card{
+    background:var(--light-gray);
+    border-radius:20px;
+    padding:40px;
+    border:1px solid rgba(239,251,0,.2);
+    max-width:400px;
+    width:90%;
+}
+
+.auth-title{
+    font-size:32px;
+    font-weight:900;
+    margin-bottom:24px;
+    text-align:center;
+    color:var(--yellow);
+}
+
+.auth-input{
+    width:100%;
+    padding:12px;
+    background:var(--dark-gray);
+    border:1px solid rgba(239,251,0,.3);
+    border-radius:10px;
+    color:white;
+    margin-bottom:16px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+}
+
+.auth-input::placeholder{
+    color:rgba(255,255,255,.4);
+}
+
+.auth-btn{
+    width:100%;
+    padding:12px;
+    background:linear-gradient(135deg, var(--blue), #003EB5);
+    border:none;
+    border-radius:10px;
+    color:white;
+    font-weight:700;
+    cursor:pointer;
+    margin-bottom:12px;
+    transition:all 0.3s ease;
+}
+
+.auth-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(2,102,255,.3);
+}
+
+.auth-toggle{
+    text-align:center;
+    font-size:13px;
+    color:rgba(255,255,255,.7);
+}
+
+.auth-toggle a{
+    color:var(--yellow);
+    cursor:pointer;
+    font-weight:700;
+}
+
+.loading{
+    text-align:center;
+    padding:40px;
+    font-size:14px;
+    color:rgba(255,255,255,.7);
+}
 
 @media(max-width:768px){
-    .app-container{
-        flex-direction:column;
-    }
-
-    .content-area{
-        padding:16px;
-    }
-
-    .tab-nav{
-        padding:0 16px;
-    }
-
     .hero-stats{
         flex-wrap:wrap;
         gap:20px;
@@ -828,6 +920,16 @@ body{
     .chat-list{
         flex:0 0 auto;
     }
+
+    .topbar{
+        flex-wrap:wrap;
+        gap:12px;
+    }
+
+    .user-status{
+        width:100%;
+        flex-wrap:wrap;
+    }
 }
 
 </style>
@@ -835,419 +937,140 @@ body{
 
 <body>
 
-<div class="topbar">
-    <div class="logo-nav">NAVIN</div>
-    <div class="user-status">
-        <div class="coin-display">
-            💰 <strong>2,450</strong> Coins
+<div class="app-container" id="app">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="logo-nav">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='70' font-size='60' font-weight='900' fill='%23EFFB00' text-anchor='middle'%3ENAVIN%3C/text%3E%3C/svg%3E" alt="NAVIN" style="height:40px;">
         </div>
-        <div class="user-level aoc">
-            Agent Of Change
+        <div class="user-status">
+            <div class="coin-display">
+                💰 <strong id="coinDisplay">0</strong> Coins
+            </div>
+            <div class="user-level" id="levelDisplay">Movers</div>
         </div>
     </div>
-</div>
 
-<div class="main-content">
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
 
-    <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('home')">🏠 Home</button>
-        <button class="tab-btn" onclick="switchTab('groups')">👥 Groups</button>
-        <button class="tab-btn" onclick="switchTab('chat')">💬 Chat</button>
-        <button class="tab-btn" onclick="switchTab('profile')">👤 Profile</button>
-    </div>
-
-    <div class="content-area">
-
-        <!-- HOME TAB -->
-        <div id="home" class="tab-content active">
-            
-            <div class="hero-banner">
-                <div class="hero-content">
-                    <div class="hero-title">Hydration Impact</div>
-                    <div class="hero-subtitle">📸 Share Your NAVIN Moment & Earn Coins</div>
-                </div>
-                <div class="hero-stats">
-                    <div class="hero-stat">
-                        <div class="hero-stat-label">This Month</div>
-                        <div class="hero-stat-value">12.5L</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-stat-label">Target Daily</div>
-                        <div class="hero-stat-value">1.0L</div>
-                    </div>
-                    <div class="hero-stat">
-                        <div class="hero-stat-label">Photos</div>
-                        <div class="hero-stat-value">18</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="feed-container">
-
-                <!-- SAMPLE POST 1 -->
-                <div class="post-card">
-                    <div class="post-header">
-                        <div class="post-avatar">A</div>
-                        <div class="post-user-info">
-                            <h4>Anya Marissa</h4>
-                            <p>2 hours ago</p>
-                        </div>
-                    </div>
-
-                    <img src="https://images.unsplash.com/photo-1609341290242-757658bae4d9?w=500&h=500&fit=crop" alt="post" class="post-image" style="display:none;background:linear-gradient(135deg, #0266FF, #00D9FF);">
-
-                    <div class="post-body">
-                        <div class="post-text">🌱 Finished my 1L hydration goal for today! Feeling energized and helping the planet one sip at a time. #HydrationChallenge #NavinMover</div>
-                        <div class="post-hashtags">
-                            <span class="post-hashtag">#HydrationChallenge</span>
-                            <span class="post-hashtag">#NavinMover</span>
-                            <span class="post-hashtag">#ClimateAction</span>
-                        </div>
-                        <div class="post-stats">
-                            <div class="post-stat-item">❤️ <strong>42</strong> Likes</div>
-                            <div class="post-stat-item">💬 <strong>8</strong> Comments</div>
-                            <div class="coin-badge">+20 Coins</div>
-                        </div>
-                        <div class="post-actions">
-                            <button class="post-action-btn">❤️ Like (+1 Coin)</button>
-                            <button class="post-action-btn">💬 Comment</button>
-                            <button class="post-action-btn">↗️ Share</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SAMPLE POST 2 -->
-                <div class="post-card">
-                    <div class="post-header">
-                        <div class="post-avatar">R</div>
-                        <div class="post-user-info">
-                            <h4>Reza Gunawan</h4>
-                            <p>5 hours ago</p>
-                        </div>
-                    </div>
-
-                    <div class="post-body">
-                        <div class="post-text">🏃‍♂️ Just logged my morning run! My hydration strategy is working perfectly. 650ml already today. Path to 1L looks strong! #NavinMover</div>
-                        <div class="post-hashtags">
-                            <span class="post-hashtag">#NavinMover</span>
-                            <span class="post-hashtag">#HealthyHydration</span>
-                            <span class="post-hashtag">#DailyGoal</span>
-                        </div>
-                        <div class="post-stats">
-                            <div class="post-stat-item">❤️ <strong>28</strong> Likes</div>
-                            <div class="post-stat-item">💬 <strong>5</strong> Comments</div>
-                            <div class="coin-badge">+20 Coins</div>
-                        </div>
-                        <div class="post-actions">
-                            <button class="post-action-btn">❤️ Like (+1 Coin)</button>
-                            <button class="post-action-btn">💬 Comment</button>
-                            <button class="post-action-btn">↗️ Share</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SAMPLE POST 3 -->
-                <div class="post-card">
-                    <div class="post-header">
-                        <div class="post-avatar" style="background:linear-gradient(135deg, #EFFB00, #CCBB00);">D</div>
-                        <div class="post-user-info">
-                            <h4>Diana Kusuma <span class="aoc-only-badge">AOC</span></h4>
-                            <p>8 hours ago</p>
-                        </div>
-                    </div>
-
-                    <div class="post-body">
-                        <div class="post-text">🌍 Exciting news! The Jakarta Eco Warriors group just hit 150 members! 🎉 Amazing to see our community growing. Next event: Beach cleanup this weekend! #EcoWarriors #JakartaMovement</div>
-                        <div class="post-hashtags">
-                            <span class="post-hashtag">#EcoWarriors</span>
-                            <span class="post-hashtag">#JakartaMovement</span>
-                            <span class="post-hashtag">#Community</span>
-                        </div>
-                        <div class="post-stats">
-                            <div class="post-stat-item">❤️ <strong>156</strong> Likes</div>
-                            <div class="post-stat-item">💬 <strong>34</strong> Comments</div>
-                            <div class="coin-badge">+20 Coins</div>
-                        </div>
-                        <div class="post-actions">
-                            <button class="post-action-btn">❤️ Like (+1 Coin)</button>
-                            <button class="post-action-btn">💬 Comment</button>
-                            <button class="post-action-btn">↗️ Share</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
+        <!-- TAB NAVIGATION -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('home')">🏠 Home</button>
+            <button class="tab-btn" onclick="switchTab('groups')">👥 Groups</button>
+            <button class="tab-btn" onclick="switchTab('chat')">💬 Chat</button>
+            <button class="tab-btn" onclick="switchTab('profile')">👤 Profile</button>
         </div>
 
-        <!-- GROUPS TAB -->
-        <div id="groups" class="tab-content">
-            
-            <div class="groups-container">
+        <!-- CONTENT AREA -->
+        <div class="content-area">
 
-                <button class="create-group-btn">✨ Create Group (Agent Of Change Only)</button>
-
-                <!-- GROUP 1 -->
-                <div class="group-card">
-                    <div class="group-header">
-                        <div>
-                            <div class="group-name">Jakarta Eco Warriors</div>
-                            <div class="group-info">👥 247 members • 🔖 Active</div>
+            <!-- HOME TAB -->
+            <div id="home" class="tab-content active">
+                <div class="hero-banner" id="heroBanner">
+                    <div class="hero-content">
+                        <div class="hero-title">Hydration Impact</div>
+                        <div class="hero-subtitle">📸 Share Your NAVIN Moment & Earn Coins</div>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">This Month</div>
+                            <div class="hero-stat-value" id="hydrationMonth">0L</div>
                         </div>
-                        <div class="group-tag">#EcoWarriors</div>
-                    </div>
-
-                    <div class="group-info" style="margin-bottom:16px;">
-                        🌱 Dedicated to sustainable hydration practices and environmental impact in Jakarta region. Led by Agent Of Change moderators.
-                    </div>
-
-                    <div class="group-members">
-                        <div class="member-avatar">D</div>
-                        <div class="member-avatar">A</div>
-                        <div class="member-avatar">R</div>
-                        <div class="member-avatar">+244</div>
-                    </div>
-
-                    <div class="group-actions">
-                        <button class="group-btn">📍 Join Group</button>
-                        <button class="group-btn">👁️ View Posts</button>
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Target Daily</div>
+                            <div class="hero-stat-value">1.0L</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Photos</div>
+                            <div class="hero-stat-value" id="photoCount">0</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- GROUP 2 -->
-                <div class="group-card">
-                    <div class="group-header">
-                        <div>
-                            <div class="group-name">Morning Hydration Habits</div>
-                            <div class="group-info">👥 89 members • 🔖 Active</div>
-                        </div>
-                        <div class="group-tag">#MorningRoutine</div>
-                    </div>
-
-                    <div class="group-info" style="margin-bottom:16px;">
-                        ☀️ For early risers! Share your morning hydration tips, routines, and how it boosts your daily performance.
-                    </div>
-
-                    <div class="group-members">
-                        <div class="member-avatar">R</div>
-                        <div class="member-avatar">M</div>
-                        <div class="member-avatar">+87</div>
-                    </div>
-
-                    <div class="group-actions">
-                        <button class="group-btn">📍 Join Group</button>
-                        <button class="group-btn">👁️ View Posts</button>
-                    </div>
+                <div class="upload-section">
+                    <label class="upload-label">Share Your Moment</label>
+                    <input type="file" id="photoInput" class="upload-input" accept="image/*" placeholder="Choose photo">
+                    <input type="text" id="captionInput" class="upload-input" placeholder="Write caption...">
+                    <button class="upload-btn" onclick="uploadPost()">📸 Post Now</button>
                 </div>
 
-                <!-- GROUP 3 -->
-                <div class="group-card">
-                    <div class="group-header">
-                        <div>
-                            <div class="group-name">Green Campus Initiative</div>
-                            <div class="group-info">👥 156 members • 🔖 Active</div>
-                        </div>
-                        <div class="group-tag">#CampusSustainability</div>
-                    </div>
-
-                    <div class="group-info" style="margin-bottom:16px;">
-                        🎓 University students uniting for sustainable campus practices. Moderated by campus Agent Of Change leaders.
-                    </div>
-
-                    <div class="group-members">
-                        <div class="member-avatar">T</div>
-                        <div class="member-avatar">S</div>
-                        <div class="member-avatar">+154</div>
-                    </div>
-
-                    <div class="group-actions">
-                        <button class="group-btn">📍 Join Group</button>
-                        <button class="group-btn">👁️ View Posts</button>
-                    </div>
+                <div class="feed-container" id="feedContainer">
+                    <div class="loading">Loading posts...</div>
                 </div>
-
             </div>
 
-        </div>
-
-        <!-- CHAT TAB -->
-        <div id="chat" class="tab-content">
-            
-            <div class="chat-container">
-
-                <div class="chat-list">
-                    <div class="chat-item active">
-                        <div class="chat-item-header">
-                            <div class="chat-item-avatar">A</div>
-                            <div class="chat-item-name">Anya Marissa</div>
-                        </div>
-                        <div class="chat-item-preview">Thanks for the hydration tip!</div>
-                    </div>
-
-                    <div class="chat-item">
-                        <div class="chat-item-header">
-                            <div class="chat-item-avatar">R</div>
-                            <div class="chat-item-name">Reza Gunawan</div>
-                        </div>
-                        <div class="chat-item-preview">Hey, want to join the group?</div>
-                    </div>
-
-                    <div class="chat-item">
-                        <div class="chat-item-header">
-                            <div class="chat-item-avatar">D</div>
-                            <div class="chat-item-name">Diana Kusuma</div>
-                        </div>
-                        <div class="chat-item-preview">Beach cleanup is this Saturday!</div>
-                    </div>
-
-                    <div class="chat-item">
-                        <div class="chat-item-header">
-                            <div class="chat-item-avatar">M</div>
-                            <div class="chat-item-name">Miko Santoso</div>
-                        </div>
-                        <div class="chat-item-preview">Can you moderate this group?</div>
-                    </div>
+            <!-- GROUPS TAB -->
+            <div id="groups" class="tab-content">
+                <div class="groups-container">
+                    <button class="create-group-btn" onclick="createGroupPrompt()">➕ Create New Group</button>
+                    <div id="groupsList"></div>
                 </div>
-
-                <div class="chat-window">
-                    <div class="chat-header">
-                        <h3>💬 Anya Marissa</h3>
-                        <p style="font-size:12px;color:rgba(255,255,255,.6);margin-top:4px;">Active 2 hours ago</p>
-                    </div>
-
-                    <div class="chat-messages">
-                        <div class="message received">
-                            <div class="message-bubble">Hey! How was your hydration session?</div>
-                        </div>
-
-                        <div class="message sent">
-                            <div class="message-bubble">Great! Hit 1L today 🎉</div>
-                        </div>
-
-                        <div class="message received">
-                            <div class="message-bubble">That's amazing! Thanks for the hydration tip you shared!</div>
-                        </div>
-
-                        <div class="message received">
-                            <div class="message-bubble">You should join our group - Jakarta Eco Warriors</div>
-                        </div>
-
-                        <div class="message sent">
-                            <div class="message-bubble">Definitely! Sounds perfect 💪</div>
-                        </div>
-                    </div>
-
-                    <div class="chat-input-area">
-                        <input type="text" class="chat-input" placeholder="Type a message...">
-                        <button class="chat-send-btn">→</button>
-                    </div>
-                </div>
-
             </div>
 
-        </div>
-
-        <!-- PROFILE TAB -->
-        <div id="profile" class="tab-content">
-            
-            <div class="profile-container">
-
-                <div class="profile-header">
-                    <div class="profile-avatar">👤</div>
-                    <div class="profile-name">Devan Tegar</div>
-                    <div class="profile-level">Agent Of Change</div>
-
-                    <div class="profile-stats">
-                        <div class="profile-stat">
-                            <div class="profile-stat-number">2,450</div>
-                            <div class="profile-stat-label">Total Coins</div>
+            <!-- CHAT TAB -->
+            <div id="chat" class="tab-content">
+                <div class="chat-container">
+                    <div class="chat-list" id="chatList"></div>
+                    <div class="chat-window">
+                        <div class="chat-header">
+                            <h3 id="chatFriendName">Select a friend</h3>
                         </div>
-                        <div class="profile-stat">
-                            <div class="profile-stat-number">67.5L</div>
-                            <div class="profile-stat-label">Total Hydration</div>
-                        </div>
-                        <div class="profile-stat">
-                            <div class="profile-stat-number">24</div>
-                            <div class="profile-stat-label">Posts</div>
+                        <div class="chat-messages" id="chatMessages"></div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" id="chatInput" placeholder="Type message...">
+                            <button class="chat-send-btn" onclick="sendMessage()">➤</button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- EDIT NAME SECTION -->
-                <div class="profile-section">
-                    <div class="profile-section-title">⚙️ Account Settings</div>
-                    <button class="edit-btn">✏️ Edit Name & Bio</button>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">User Level</div>
-                        <div class="profile-item-value" style="color:var(--yellow);">Agent Of Change</div>
+            <!-- PROFILE TAB -->
+            <div id="profile" class="tab-content">
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profileAvatar">U</div>
+                        <div class="profile-name" id="profileName">User</div>
+                        <div class="profile-level" id="profileLevel">Movers</div>
+                        <div class="profile-stats">
+                            <div class="profile-stat">
+                                <div class="profile-stat-number" id="profileCoins">0</div>
+                                <div class="profile-stat-label">Coins</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-number" id="profileHydration">0</div>
+                                <div class="profile-stat-label">Hydration (L)</div>
+                            </div>
+                            <div class="profile-stat">
+                                <div class="profile-stat-number" id="profileFriends">0</div>
+                                <div class="profile-stat-label">Friends</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="profile-item">
-                        <div class="profile-item-label">Member Since</div>
-                        <div class="profile-item-value">March 2024</div>
+                    <div class="profile-section">
+                        <div class="profile-section-title">Hydration Goal</div>
+                        <div class="profile-item">
+                            <span class="profile-item-label">Daily Progress</span>
+                            <span class="profile-item-value" id="dailyProgress">0%</span>
+                        </div>
+                        <div class="hydration-progress">
+                            <div class="hydration-progress-bar" id="hydrationBar" style="width:0%"></div>
+                        </div>
+                        <input type="number" id="hydrationInput" class="upload-input" placeholder="Add hydration (ml)" style="margin-top:12px;">
+                        <button class="upload-btn" onclick="addHydration()" style="margin-top:8px;">💧 Log Hydration</button>
                     </div>
 
-                    <div class="profile-item">
-                        <div class="profile-item-label">Groups Created</div>
-                        <div class="profile-item-value">3</div>
+                    <div class="profile-section">
+                        <div class="profile-section-title">Friends</div>
+                        <div id="friendsList"></div>
+                        <input type="text" id="friendInput" class="upload-input" placeholder="Enter friend User ID..." style="margin-top:12px;">
+                        <button class="upload-btn" onclick="addFriendById()" style="margin-top:8px;">👥 Add Friend</button>
                     </div>
+
+                    <button class="logout-btn" onclick="logout()">🚪 Logout</button>
                 </div>
-
-                <!-- COIN SECTION -->
-                <div class="profile-section">
-                    <div class="profile-section-title">💰 Coin Breakdown</div>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">Photo Uploads</div>
-                        <div class="profile-item-value">+1,280 coins</div>
-                    </div>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">Likes Received</div>
-                        <div class="profile-item-value">+680 coins</div>
-                    </div>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">Hydration Goals</div>
-                        <div class="profile-item-value">+490 coins</div>
-                    </div>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">Current Balance</div>
-                        <div class="profile-item-value" style="color:var(--yellow);font-size:18px;">2,450 Coins</div>
-                    </div>
-                </div>
-
-                <!-- HYDRATION SECTION -->
-                <div class="profile-section">
-                    <div class="profile-section-title">💧 Hydration Tracking</div>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">Today's Progress</div>
-                        <div class="profile-item-value">650ml / 1000ml</div>
-                    </div>
-
-                    <div class="hydration-progress">
-                        <div class="hydration-progress-bar" style="width:65%;"></div>
-                    </div>
-
-                    <div class="profile-item" style="margin-top:16px;">
-                        <div class="profile-item-label">This Week Average</div>
-                        <div class="profile-item-value">1.05L / day</div>
-                    </div>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">Goals Completed</div>
-                        <div class="profile-item-value" style="color:var(--yellow);">18 days this month</div>
-                    </div>
-
-                    <div class="profile-item">
-                        <div class="profile-item-label">Coins from Hydration</div>
-                        <div class="profile-item-value">+490 coins (5 per goal)</div>
-                    </div>
-                </div>
-
             </div>
 
         </div>
@@ -1258,52 +1081,389 @@ body{
 
 <script>
 
-function switchTab(tabName) {
-    // Hide all tabs
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => tab.classList.remove('active'));
-    
-    // Remove active from all buttons
-    const buttons = document.querySelectorAll('.tab-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
-    
-    // Show selected tab
-    document.getElementById(tabName).classList.add('active');
-    
-    // Add active to clicked button
+const API_BASE = 'https://script.google.com/macros/d/14iGYjHSkeWS37k5vxFYZ75iqBd8lDfgVXNKfSsJGfBYoc2YMY4QdqeyG/userweb';
+const HERO_IMAGES = [
+    'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%27%230266FF%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E🚴 Cycling Day%3C/text%3E%3C/svg%3E)',
+    'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%27%23003EB5%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E💧 Hydration Goal%3C/text%3E%3C/svg%3E)',
+    'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%270266FF%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E🌍 Carbon Saved%3C/text%3E%3C/svg%3E)',
+    'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%23003EB5%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E🏆 Impact%3C/text%3E%3C/svg%3E)'
+];
+
+let currentUser = null;
+let currentImageIndex = 0;
+let friends = [];
+let chatFriends = [];
+let selectedChatFriend = null;
+
+// ─── INIT ───────────────────────────────────────────────────
+function init() {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+
+    if (!token || !userId) {
+        showAuthUI();
+    } else {
+        currentUser = { token, userId };
+        loadApp();
+    }
+}
+
+function showAuthUI() {
+    document.getElementById('app').innerHTML = `
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-title">NAVIN</div>
+                <div id="authForm">
+                    <h3 style="margin-bottom:20px;">Login</h3>
+                    <input type="email" id="email" class="auth-input" placeholder="Email" required>
+                    <input type="password" id="password" class="auth-input" placeholder="Password" required>
+                    <button class="auth-btn" onclick="login()">Login</button>
+                    <div class="auth-toggle">
+                        Don't have account? <a onclick="toggleAuthMode()">Sign Up</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function toggleAuthMode() {
+    const form = document.getElementById('authForm');
+    if (form.innerHTML.includes('Login')) {
+        form.innerHTML = `
+            <h3 style="margin-bottom:20px;">Sign Up</h3>
+            <input type="text" id="name" class="auth-input" placeholder="Full Name" required>
+            <input type="email" id="email" class="auth-input" placeholder="Email" required>
+            <input type="password" id="password" class="auth-input" placeholder="Password" required>
+            <button class="auth-btn" onclick="signup()">Sign Up</button>
+            <div class="auth-toggle">
+                Already have account? <a onclick="toggleAuthMode()">Login</a>
+            </div>
+        `;
+    } else {
+        toggleAuthMode.call({ innerHTML: 'Login' });
+        showAuthUI();
+    }
+}
+
+function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({
+        action: 'login',
+        email,
+        password
+    }))).then(r => r.json()).then(data => {
+        if (data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userId', data.userId);
+            currentUser = { token: data.token, userId: data.userId };
+            loadApp();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function signup() {
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({
+        action: 'signup',
+        name,
+        email,
+        password
+    }))).then(r => r.json()).then(data => {
+        if (data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userId', data.userId);
+            currentUser = { token: data.token, userId: data.userId };
+            loadApp();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function logout() {
+    localStorage.clear();
+    location.reload();
+}
+
+function loadApp() {
+    loadProfile();
+    loadFeed();
+    loadFriends();
+    loadChatFriends();
+    loadGroups();
+    startHeroImageRotation();
+    setInterval(refresh, 60000);
+}
+
+function startHeroImageRotation() {
+    const banner = document.getElementById('heroBanner');
+    setInterval(() => {
+        currentImageIndex = (currentImageIndex + 1) % HERO_IMAGES.length;
+        banner.style.backgroundImage = HERO_IMAGES[currentImageIndex];
+    }, 3000);
+    banner.style.backgroundImage = HERO_IMAGES[0];
+}
+
+// ─── API CALLS ───────────────────────────────────────────────
+function apiCall(action, data = {}) {
+    return fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({
+        action,
+        token: currentUser.token,
+        userId: currentUser.userId,
+        ...data
+    }))).then(r => r.json());
+}
+
+function loadProfile() {
+    apiCall('getMyProfile').then(data => {
+        if (data.success) {
+            const p = data.profile;
+            document.getElementById('coinDisplay').textContent = Math.round(p.coins || 0);
+            document.getElementById('levelDisplay').textContent = p.level;
+            document.getElementById('profileName').textContent = p.name;
+            document.getElementById('profileAvatar').textContent = p.name.charAt(0).toUpperCase();
+            document.getElementById('profileLevel').textContent = p.level;
+            document.getElementById('profileCoins').textContent = Math.round(p.coins || 0);
+            document.getElementById('profileHydration').textContent = Math.round((p.totalHydration_L || 0) * 10) / 10;
+            document.getElementById('hydrationMonth').textContent = Math.round((p.totalHydration_L || 0) * 10) / 10 + 'L';
+            document.getElementById('levelDisplay').classList.toggle('aoc', p.level === 'Agent Of Change');
+        }
+    });
+}
+
+function loadFeed() {
+    apiCall('getFeed').then(data => {
+        if (data.success) {
+            const container = document.getElementById('feedContainer');
+            if (!data.feed || data.feed.length === 0) {
+                container.innerHTML = '<div class="loading">No posts yet. Be the first to post!</div>';
+                return;
+            }
+            container.innerHTML = data.feed.map(post => `
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="post-avatar">${post.name.charAt(0).toUpperCase()}</div>
+                        <div class="post-user-info">
+                            <h4>${post.name}</h4>
+                            <p>${new Date(post.timestamp).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    ${post.photoBase64 ? `<img src="${post.photoBase64}" class="post-image">` : ''}
+                    <div class="post-body">
+                        <div class="post-text">${post.caption || ''}</div>
+                        <div class="post-stats">
+                            <div class="post-stat-item">👍 <strong>${post.likes_count || 0}</strong> Likes</div>
+                            <div class="post-stat-item coin-badge">+${post.coins_earned || 20} Coins</div>
+                        </div>
+                        <div class="post-actions">
+                            <button class="post-action-btn" onclick="likePost('${post.postId}')">👍 Like</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    });
+}
+
+function uploadPost() {
+    const caption = document.getElementById('captionInput').value;
+    const photoInput = document.getElementById('photoInput');
+
+    if (!caption && !photoInput.files[0]) {
+        alert('Add caption or photo!');
+        return;
+    }
+
+    if (photoInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            apiCall('uploadPost', {
+                caption,
+                photoBase64: e.target.result.substring(0, 1000)
+            }).then(data => {
+                if (data.success) {
+                    document.getElementById('captionInput').value = '';
+                    photoInput.value = '';
+                    loadFeed();
+                    loadProfile();
+                }
+            });
+        };
+        reader.readAsDataURL(photoInput.files[0]);
+    } else {
+        apiCall('uploadPost', { caption }).then(data => {
+            if (data.success) {
+                document.getElementById('captionInput').value = '';
+                loadFeed();
+                loadProfile();
+            }
+        });
+    }
+}
+
+function likePost(postId) {
+    apiCall('likePost', { postId }).then(() => {
+        loadFeed();
+        loadProfile();
+    });
+}
+
+function loadFriends() {
+    apiCall('getMyFriends').then(data => {
+        if (data.success) {
+            friends = data.friends || [];
+            document.getElementById('profileFriends').textContent = friends.length;
+            const list = document.getElementById('friendsList');
+            if (friends.length === 0) {
+                list.innerHTML = '<div class="profile-item"><span>No friends yet</span></div>';
+            } else {
+                list.innerHTML = friends.map(f => `
+                    <div class="profile-item">
+                        <span class="profile-item-label">${f.name}</span>
+                        <span class="profile-item-value">${f.level}</span>
+                    </div>
+                `).join('');
+            }
+        }
+    });
+}
+
+function addFriendById() {
+    const id = document.getElementById('friendInput').value.trim();
+    if (!id) return alert('Enter friend ID!');
+
+    apiCall('addFriendByUserId', { friendUserId: id }).then(data => {
+        if (data.success) {
+            alert(data.message);
+            document.getElementById('friendInput').value = '';
+            loadFriends();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function addHydration() {
+    const ml = parseInt(document.getElementById('hydrationInput').value);
+    if (!ml || ml <= 0) return alert('Enter valid hydration!');
+
+    apiCall('updateHydration', { hydration_ml: ml }).then(data => {
+        if (data.success) {
+            document.getElementById('hydrationInput').value = '';
+            loadProfile();
+        }
+    });
+}
+
+function loadChatFriends() {
+    apiCall('getMyFriends').then(data => {
+        if (data.success) {
+            chatFriends = data.friends || [];
+            const list = document.getElementById('chatList');
+            list.innerHTML = chatFriends.map((f, i) => `
+                <div class="chat-item ${i === 0 ? 'active' : ''}" onclick="selectChatFriend(${i}, '${f.friendId}', '${f.name}')">
+                    <div class="chat-item-header">
+                        <div class="chat-item-avatar">${f.name.charAt(0)}</div>
+                        <div class="chat-item-name">${f.name}</div>
+                    </div>
+                    <div class="chat-item-preview">Click to chat</div>
+                </div>
+            `).join('');
+            if (chatFriends.length > 0) {
+                selectChatFriend(0, chatFriends[0].friendId, chatFriends[0].name);
+            }
+        }
+    });
+}
+
+function selectChatFriend(index, friendId, name) {
+    selectedChatFriend = { friendId, name };
+    document.querySelectorAll('.chat-item').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+    });
+    document.getElementById('chatFriendName').textContent = name;
+    document.getElementById('chatMessages').innerHTML = `
+        <div class="message received">
+            <div class="message-bubble">Hey! 👋</div>
+        </div>
+    `;
+}
+
+function sendMessage() {
+    if (!selectedChatFriend) return;
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const messages = document.getElementById('chatMessages');
+    messages.innerHTML += `
+        <div class="message sent">
+            <div class="message-bubble">${text}</div>
+        </div>
+    `;
+    input.value = '';
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function loadGroups() {
+    apiCall('getGroups').then(data => {
+        if (data.success) {
+            const container = document.getElementById('groupsList');
+            if (!data.groups || data.groups.length === 0) {
+                container.innerHTML = '<div class="loading">No groups yet</div>';
+            } else {
+                container.innerHTML = data.groups.map(g => `
+                    <div class="group-card">
+                        <div class="group-header">
+                            <div class="group-name">${g.name}</div>
+                            <div class="group-tag">Members: ${g.members.length}</div>
+                        </div>
+                        <div class="group-actions">
+                            <button class="group-btn">Join</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+    });
+}
+
+function createGroupPrompt() {
+    const name = prompt('Group name:');
+    if (!name) return;
+
+    apiCall('createGroup', { groupName: name }).then(data => {
+        if (data.success) {
+            loadGroups();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
     event.target.classList.add('active');
 }
 
-// Like button interaction
-document.querySelectorAll('.post-action-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        if (this.textContent.includes('Like')) {
-            alert('❤️ Post liked! +1 Coin awarded!');
-            this.style.opacity = '0.6';
-        } else if (this.textContent.includes('Comment')) {
-            alert('💬 Comment modal would open');
-        } else if (this.textContent.includes('Share')) {
-            alert('↗️ Share modal would open');
-        }
-    });
-});
+function refresh() {
+    loadProfile();
+    loadFeed();
+}
 
-// Group button interactions
-document.querySelectorAll('.group-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        if (this.textContent.includes('Join')) {
-            alert('✅ Group joined! Welcome aboard!');
-            this.textContent = '✓ Joined';
-            this.style.opacity = '0.6';
-        } else if (this.textContent.includes('View')) {
-            alert('📍 Opening group posts...');
-        }
-    });
-});
+init();
 
 </script>
 
 </body>
 </html>
-
-<!-- Cache bust: 1783323323 -->
