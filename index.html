@@ -1150,20 +1150,26 @@ function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({
-        action: 'login',
-        email,
-        password
-    }))).then(r => r.json()).then(data => {
-        if (data.success) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.userId);
-            currentUser = { token: data.token, userId: data.userId };
-            loadApp();
-        } else {
-            alert(data.message);
+    fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email, password })
+    }).then(r => r.text()).then(text => {
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userId', data.userId);
+                currentUser = { token: data.token, userId: data.userId };
+                loadApp();
+            } else {
+                alert(data.message || 'Login failed');
+            }
+        } catch (e) {
+            console.error('Parse error:', text);
+            alert('API error: ' + text);
         }
-    });
+    }).catch(err => alert('Network error: ' + err.message));
 }
 
 function signup() {
@@ -1171,21 +1177,26 @@ function signup() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
-    fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({
-        action: 'signup',
-        name,
-        email,
-        password
-    }))).then(r => r.json()).then(data => {
-        if (data.success) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userId', data.userId);
-            currentUser = { token: data.token, userId: data.userId };
-            loadApp();
-        } else {
-            alert(data.message);
+    fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'signup', name, email, password })
+    }).then(r => r.text()).then(text => {
+        try {
+            const data = JSON.parse(text);
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userId', data.userId);
+                currentUser = { token: data.token, userId: data.userId };
+                loadApp();
+            } else {
+                alert(data.message || 'Signup failed');
+            }
+        } catch (e) {
+            console.error('Parse error:', text);
+            alert('API error: ' + text);
         }
-    });
+    }).catch(err => alert('Network error: ' + err.message));
 }
 
 function logout() {
@@ -1317,12 +1328,26 @@ function apiCall(action, data = {}) {
     if (!API_BASE) {
         return Promise.resolve(mockApiCall(action, data));
     }
-    return fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({
-        action,
-        token: currentUser.token,
-        userId: currentUser.userId,
-        ...data
-    }))).then(r => r.json());
+    return fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action,
+            token: currentUser?.token || '',
+            userId: currentUser?.userId || '',
+            ...data
+        })
+    }).then(r => r.text()).then(text => {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('API parse error:', text, e);
+            return { success: false, message: 'API error: invalid response' };
+        }
+    }).catch(err => {
+        console.error('API call error:', err);
+        return { success: false, message: 'Network error: ' + err.message };
+    });
 }
 
 function loadProfile() {
