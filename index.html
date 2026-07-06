@@ -1081,7 +1081,11 @@ body{
 
 <script>
 
-const API_BASE = 'https://script.google.com/macros/d/14iGYjHSkeWS37k5vxFYZ75iqBd8lDfgVXNKfSsJGfBYoc2YMY4QdqeyG/userweb';
+// ⚠️ TEMPORARY: Mock API sampai Google Apps Script ready
+// Ganti dengan real API_BASE saat backend siap:
+// const API_BASE = 'https://script.google.com/macros/d/14iGYjHSkeWS37k5vxFYZ75iqBd8lDfgVXNKfSsJGfBYoc2YMY4QdqeyG/userweb';
+
+const API_BASE = null; // Will use Mock Backend
 const HERO_IMAGES = [
     'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%27%230266FF%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E🚴 Cycling Day%3C/text%3E%3C/svg%3E)',
     'url(data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 600 400%27%3E%3Crect fill=%27%23003EB5%27 width=%27600%27 height=%27400%27/%3E%3Ctext x=%27300%27 y=%27200%27 font-size=%2760%27 fill=%27%23EFFB00%27 text-anchor=%27middle%27 dominant-baseline=%27middle%27%3E💧 Hydration Goal%3C/text%3E%3C/svg%3E)',
@@ -1212,8 +1216,111 @@ function startHeroImageRotation() {
     banner.style.backgroundImage = HERO_IMAGES[0];
 }
 
+// ─── MOCK API (localStorage) ───────────────────────────────
+function mockApiCall(action, data = {}) {
+    const db = {
+        users: JSON.parse(localStorage.getItem('navin_users') || '[]'),
+        posts: JSON.parse(localStorage.getItem('navin_posts') || '[]'),
+        friends: JSON.parse(localStorage.getItem('navin_friends') || '[]'),
+    };
+
+    if (action === 'signup') {
+        const { email, password, name } = data;
+        if (db.users.find(u => u.email === email)) return { success: false, message: 'Email sudah terdaftar.' };
+        const userId = 'USR_' + Math.random().toString(36).substr(2, 8).toUpperCase();
+        const user = { userId, email, password, name, joinDate: new Date().toISOString(), level: 'Movers', coins: 0, totalHydration_L: 0 };
+        db.users.push(user);
+        localStorage.setItem('navin_users', JSON.stringify(db.users));
+        const token = btoa(userId + ':' + Math.random());
+        return { success: true, token, userId, name, email };
+    }
+
+    if (action === 'login') {
+        const { email, password } = data;
+        const user = db.users.find(u => u.email === email && u.password === password);
+        if (!user) return { success: false, message: 'Email atau password salah.' };
+        const token = btoa(user.userId + ':' + Math.random());
+        return { success: true, token, userId: user.userId, name: user.name, email: user.email, level: user.level, coins: user.coins };
+    }
+
+    if (action === 'getMyProfile') {
+        const user = db.users.find(u => u.userId === currentUser.userId);
+        if (!user) return { success: false, message: 'User tidak ditemukan.' };
+        return { success: true, profile: user };
+    }
+
+    if (action === 'uploadPost') {
+        const post = { postId: 'POST_' + Date.now(), userId: currentUser.userId, caption: data.caption, photoBase64: data.photoBase64, timestamp: new Date().toISOString(), likes_count: 0, coins_earned: 20, name: '' };
+        const user = db.users.find(u => u.userId === currentUser.userId);
+        if (user) { post.name = user.name; user.coins = (user.coins || 0) + 20; }
+        db.posts.push(post);
+        db.users = db.users.map(u => u.userId === currentUser.userId ? { ...u, coins: user.coins } : u);
+        localStorage.setItem('navin_posts', JSON.stringify(db.posts));
+        localStorage.setItem('navin_users', JSON.stringify(db.users));
+        return { success: true, message: 'Post berhasil dibuat! +20 coins', postId: post.postId };
+    }
+
+    if (action === 'getFeed') {
+        const friendIds = db.friends.filter(f => f.userId === currentUser.userId && f.status === 'accepted').map(f => f.friendId);
+        friendIds.push(currentUser.userId);
+        const feed = db.posts.filter(p => friendIds.includes(p.userId)).reverse().slice(0, 50);
+        return { success: true, feed };
+    }
+
+    if (action === 'likePost') {
+        const post = db.posts.find(p => p.postId === data.postId);
+        if (post) {
+            post.likes_count = (post.likes_count || 0) + 1;
+            const author = db.users.find(u => u.userId === post.userId);
+            if (author) author.coins = (author.coins || 0) + 1;
+            localStorage.setItem('navin_posts', JSON.stringify(db.posts));
+            localStorage.setItem('navin_users', JSON.stringify(db.users));
+        }
+        return { success: true, message: 'Post dilike! +1 coin untuk author' };
+    }
+
+    if (action === 'getMyFriends') {
+        const friends = db.friends.filter(f => f.userId === currentUser.userId && f.status === 'accepted').map(f => {
+            const friend = db.users.find(u => u.userId === f.friendId);
+            return { friendId: f.friendId, name: friend?.name || 'Unknown', email: friend?.email || '', level: friend?.level || 'Movers' };
+        });
+        return { success: true, friends };
+    }
+
+    if (action === 'addFriendByUserId') {
+        const friend = db.users.find(u => u.userId === data.friendUserId);
+        if (!friend) return { success: false, message: 'User tidak ditemukan.' };
+        if (db.friends.some(f => (f.userId === currentUser.userId && f.friendId === data.friendUserId) || (f.userId === data.friendUserId && f.friendId === currentUser.userId))) return { success: false, message: 'Sudah berteman.' };
+        db.friends.push({ userId: currentUser.userId, friendId: data.friendUserId, status: 'accepted', createdAt: new Date().toISOString() });
+        db.friends.push({ userId: data.friendUserId, friendId: currentUser.userId, status: 'accepted', createdAt: new Date().toISOString() });
+        localStorage.setItem('navin_friends', JSON.stringify(db.friends));
+        return { success: true, message: 'Teman ditambahkan: ' + friend.name };
+    }
+
+    if (action === 'updateHydration') {
+        const user = db.users.find(u => u.userId === currentUser.userId);
+        if (user) {
+            user.totalHydration_L = (user.totalHydration_L || 0) + (data.hydration_ml / 1000);
+            if (user.totalHydration_L >= 1 && (user.totalHydration_L - data.hydration_ml / 1000) < 1) {
+                user.coins = (user.coins || 0) + 5;
+            }
+            localStorage.setItem('navin_users', JSON.stringify(db.users));
+        }
+        return { success: true, message: 'Hydration updated!', totalHydration: Math.round(user.totalHydration_L * 100) / 100, coinsBonus: 5 };
+    }
+
+    if (action === 'getGroups') {
+        return { success: true, groups: [], canCreate: true };
+    }
+
+    return { success: false, message: 'Unknown action' };
+}
+
 // ─── API CALLS ───────────────────────────────────────────────
 function apiCall(action, data = {}) {
+    if (!API_BASE) {
+        return Promise.resolve(mockApiCall(action, data));
+    }
     return fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({
         action,
         token: currentUser.token,
