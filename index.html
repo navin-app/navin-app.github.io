@@ -1210,11 +1210,9 @@ function loadApp() {
     loadProfile();
     loadFeed();
     loadFriends();
-    loadChatFriends();
     loadGroups();
-    loadMyPosts();
     startHeroImageRotation();
-    setInterval(refresh, 60000);
+    setInterval(refresh, 90000);
 }
 
 function startHeroImageRotation() {
@@ -1411,27 +1409,61 @@ function compressImage(file, maxDim = 480, quality = 0.6) {
     });
 }
 
-function uploadAvatar(input) {
-    if (!input.files[0]) return;
-    compressImage(input.files[0], 240, 0.6).then(dataUrl => {
-        apiCall('updateProfile', { avatarBase64: dataUrl }).then(data => {
-            if (data.success) {
-                loadProfile();
-            } else {
-                alert(data.message || 'Gagal upload avatar');
-            }
+// ─── Chunked upload: kirim foto besar dalam potongan ~3KB ───
+const CHUNK_SIZE = 3000;
+
+async function uploadInChunks(dataUrl, onProgress) {
+    const uploadId = currentUser.userId + '_' + Date.now();
+    const total = Math.ceil(dataUrl.length / CHUNK_SIZE);
+    for (let i = 0; i < total; i++) {
+        if (onProgress) onProgress(i + 1, total);
+        const res = await apiCall('uploadChunk', {
+            uploadId,
+            chunkIndex: i,
+            totalChunks: total,
+            data: dataUrl.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE)
         });
-    });
+        if (!res.success) throw new Error(res.message || 'Chunk gagal');
+    }
+    return { uploadId, total };
+}
+
+async function uploadAvatar(input) {
+    if (!input.files[0]) return;
+    const avatarEl = document.getElementById('profileAvatar');
+    try {
+        const dataUrl = await compressImage(input.files[0], 160, 0.6);
+        let payload;
+        if (dataUrl.length <= CHUNK_SIZE) {
+            payload = { avatarBase64: dataUrl };
+        } else {
+            avatarEl.textContent = '⏳';
+            const { uploadId, total } = await uploadInChunks(dataUrl);
+            payload = { avatarUploadId: uploadId, avatarChunks: total };
+        }
+        const data = await apiCall('updateProfile', payload);
+        if (data.success) {
+            loadProfile();
+        } else {
+            alert(data.message || 'Gagal upload avatar');
+        }
+    } catch (err) {
+        alert('Upload avatar gagal: ' + err.message);
+    } finally {
+        input.value = '';
+    }
 }
 
 function loadFeed() {
     apiCall('getFeed').then(data => {
         if (data.success) {
             const container = document.getElementById('feedContainer');
+            renderMyPosts(data.feed);
             if (!data.feed || data.feed.length === 0) {
-                container.innerHTML = '<div class="loading">No posts yet. Be the first to post!</div>';
+                if (container) container.innerHTML = '<div class="loading">No posts yet. Be the first to post!</div>';
                 return;
             }
+            if (!container) return;
             container.innerHTML = data.feed.map(post => `
                 <div class="post-card">
                     <div class="post-header">
@@ -1441,7 +1473,7 @@ function loadFeed() {
                             <p>${new Date(post.timestamp).toLocaleDateString()}</p>
                         </div>
                     </div>
-                    ${post.photoBase64 ? `<img src="${post.photoBase64}" class="post-image">` : ''}
+                    ${post.photoBase64 ? `<img src="${post.photoBase64}" class="post-image" loading="lazy">` : ''}
                     <div class="post-body">
                         <div class="post-text">${post.caption || ''}</div>
                         <div class="post-stats">
@@ -1459,41 +1491,49 @@ function loadFeed() {
     });
 }
 
-function uploadPost() {
+async function uploadPost() {
     const caption = document.getElementById('captionInput').value;
     const photoInput = document.getElementById('photoInput');
+    const btn = document.querySelector('.upload-section .upload-btn');
 
     if (!caption && !photoInput.files[0]) {
         alert('Add caption or photo!');
         return;
     }
 
-    if (photoInput.files[0]) {
-        compressImage(photoInput.files[0], 480, 0.6).then(dataUrl => {
-            apiCall('uploadPost', {
-                caption,
-                photoBase64: dataUrl
-            }).then(data => {
-                if (data.success) {
-                    document.getElementById('captionInput').value = '';
-                    photoInput.value = '';
-                    loadFeed();
-                    loadProfile();
-                    loadMyPosts();
-                } else {
-                    alert(data.message || 'Gagal upload post');
-                }
-            });
-        });
-    } else {
-        apiCall('uploadPost', { caption }).then(data => {
-            if (data.success) {
-                document.getElementById('captionInput').value = '';
-                loadFeed();
-                loadProfile();
-                loadMyPosts();
+    const originalLabel = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+
+    try {
+        let payload = { caption };
+
+        if (photoInput.files[0]) {
+            const dataUrl = await compressImage(photoInput.files[0], 420, 0.55);
+            if (dataUrl.length <= CHUNK_SIZE) {
+                payload.photoBase64 = dataUrl;
+            } else {
+                const { uploadId, total } = await uploadInChunks(dataUrl, (i, t) => {
+                    if (btn) btn.textContent = `📤 Mengunggah foto ${i}/${t}...`;
+                });
+                payload.photoUploadId = uploadId;
+                payload.photoChunks = total;
             }
-        });
+        }
+
+        if (btn) btn.textContent = '💾 Menyimpan post...';
+        const data = await apiCall('uploadPost', payload);
+        if (data.success) {
+            document.getElementById('captionInput').value = '';
+            photoInput.value = '';
+            loadFeed();
+            loadProfile();
+        } else {
+            alert(data.message || 'Gagal upload post');
+        }
+    } catch (err) {
+        alert('Upload gagal: ' + err.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel; }
     }
 }
 
@@ -1509,31 +1549,32 @@ function deletePost(postId) {
     apiCall('deletePost', { postId }).then(data => {
         if (data.success) {
             loadFeed();
-            loadMyPosts();
         } else {
             alert(data.message || 'Gagal menghapus post');
         }
     });
 }
 
-function loadMyPosts() {
-    apiCall('getFeed').then(data => {
-        const list = document.getElementById('myPostsList');
-        if (!list) return;
-        const myPosts = (data.feed || []).filter(p => p.userId === currentUser.userId);
-        if (myPosts.length === 0) {
-            list.innerHTML = '<div class="profile-item"><span class="profile-item-label">Belum ada post</span></div>';
-            return;
-        }
-        list.innerHTML = myPosts.map(post => `
-            <div class="profile-item">
-                <span class="profile-item-label">${post.caption ? post.caption.substring(0, 30) : '(No caption)'} — ${new Date(post.timestamp).toLocaleDateString()}</span>
-                <button class="post-action-btn" style="flex:none;padding:6px 10px;" onclick="deletePost('${post.postId}')">🗑️ Delete</button>
-            </div>
-        `).join('');
-    });
+// Render "My Posts" dari cache feed — tanpa request tambahan
+function renderMyPosts(feed) {
+    const myPosts = (feed || []).filter(p => p.userId === currentUser.userId);
+    const photoCountEl = document.getElementById('photoCount');
+    if (photoCountEl) photoCountEl.textContent = myPosts.filter(p => p.photoBase64).length;
+    const list = document.getElementById('myPostsList');
+    if (!list) return;
+    if (myPosts.length === 0) {
+        list.innerHTML = '<div class="profile-item"><span class="profile-item-label">Belum ada post</span></div>';
+        return;
+    }
+    list.innerHTML = myPosts.map(post => `
+        <div class="profile-item">
+            <span class="profile-item-label">${post.caption ? post.caption.substring(0, 30) : '(No caption)'} — ${new Date(post.timestamp).toLocaleDateString()}</span>
+            <button class="post-action-btn" style="flex:none;padding:6px 10px;" onclick="deletePost('${post.postId}')">🗑️ Delete</button>
+        </div>
+    `).join('');
 }
 
+// Satu request untuk Friends list (Profile) + Chat list sekaligus
 function loadFriends() {
     apiCall('getMyFriends').then(data => {
         if (data.success) {
@@ -1550,6 +1591,7 @@ function loadFriends() {
                     </div>
                 `).join('');
             }
+            renderChatFriends(friends);
         }
     });
 }
@@ -1581,25 +1623,22 @@ function addHydration() {
     });
 }
 
-function loadChatFriends() {
-    apiCall('getMyFriends').then(data => {
-        if (data.success) {
-            chatFriends = data.friends || [];
-            const list = document.getElementById('chatList');
-            list.innerHTML = chatFriends.map((f, i) => `
-                <div class="chat-item ${i === 0 ? 'active' : ''}" onclick="selectChatFriend(${i}, '${f.friendId}', '${f.name}')">
-                    <div class="chat-item-header">
-                        <div class="chat-item-avatar">${f.name.charAt(0)}</div>
-                        <div class="chat-item-name">${f.name}</div>
-                    </div>
-                    <div class="chat-item-preview">Click to chat</div>
-                </div>
-            `).join('');
-            if (chatFriends.length > 0) {
-                selectChatFriend(0, chatFriends[0].friendId, chatFriends[0].name);
-            }
-        }
-    });
+function renderChatFriends(friendsData) {
+    chatFriends = friendsData || [];
+    const list = document.getElementById('chatList');
+    if (!list) return;
+    list.innerHTML = chatFriends.map((f, i) => `
+        <div class="chat-item ${i === 0 ? 'active' : ''}" onclick="selectChatFriend(${i}, '${f.friendId}', '${f.name}')">
+            <div class="chat-item-header">
+                <div class="chat-item-avatar">${f.name.charAt(0)}</div>
+                <div class="chat-item-name">${f.name}</div>
+            </div>
+            <div class="chat-item-preview">Click to chat</div>
+        </div>
+    `).join('');
+    if (chatFriends.length > 0) {
+        selectChatFriend(0, chatFriends[0].friendId, chatFriends[0].name);
+    }
 }
 
 function selectChatFriend(index, friendId, name) {

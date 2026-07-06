@@ -77,6 +77,7 @@ function processRequest(payload) {
   else if (action === 'getMyProfile')   result = handleGetMyProfile(payload);
   else if (action === 'updateProfile')  result = handleUpdateProfile(payload);
   else if (action === 'getFeed')        result = handleGetFeed(payload);
+  else if (action === 'uploadChunk')    result = handleUploadChunk(payload);
   else if (action === 'uploadPost')     result = handleUploadPost(payload);
   else if (action === 'deletePost')     result = handleDeletePost(payload);
   else if (action === 'likePost')       result = handleLikePost(payload);
@@ -230,17 +231,24 @@ function handleGetMyProfile(body) {
 
 // ── Update Profile ────────────────────────────────────────
 function handleUpdateProfile(body) {
-  const { token, userId, name, avatarBase64 } = body;
+  const { token, userId, name, avatarBase64, avatarUploadId, avatarChunks } = body;
   if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const usersSheet = ss.getSheetByName(SHEET_USERS);
   const usersData = usersSheet.getDataRange().getValues();
 
+  let avatar = avatarBase64 || '';
+  if (avatarUploadId && avatarChunks) {
+    const assembled = assembleChunks(avatarUploadId, avatarChunks);
+    if (assembled === null) return { success: false, message: 'Upload avatar tidak lengkap, coba lagi.' };
+    avatar = assembled;
+  }
+
   for (let i = 1; i < usersData.length; i++) {
     if (usersData[i][0] === userId) {
       if (name) usersSheet.getRange(i + 1, 4).setValue(name);
-      if (avatarBase64) usersSheet.getRange(i + 1, 10).setValue(avatarBase64.substring(0, 40000));
+      if (avatar) usersSheet.getRange(i + 1, 10).setValue(avatar.substring(0, 45000));
       return { success: true, message: 'Profil diupdate!' };
     }
   }
@@ -248,9 +256,36 @@ function handleUpdateProfile(body) {
   return { success: false, message: 'User tidak ditemukan.' };
 }
 
+// ── Chunked Upload (untuk foto > limit URL GET) ────────────
+function handleUploadChunk(body) {
+  const { token, userId, uploadId, chunkIndex, totalChunks, data } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+  if (!uploadId || chunkIndex === undefined || !data)
+    return { success: false, message: 'Chunk data tidak lengkap.' };
+
+  const cache = CacheService.getScriptCache();
+  cache.put('upl_' + uploadId + '_' + chunkIndex, data, 3600);
+  return { success: true, message: 'Chunk ' + (chunkIndex + 1) + '/' + totalChunks + ' diterima' };
+}
+
+function assembleChunks(uploadId, totalChunks) {
+  const cache = CacheService.getScriptCache();
+  const keys = [];
+  for (let i = 0; i < totalChunks; i++) keys.push('upl_' + uploadId + '_' + i);
+  const got = cache.getAll(keys);
+  let out = '';
+  for (let i = 0; i < totalChunks; i++) {
+    const part = got['upl_' + uploadId + '_' + i];
+    if (part == null) return null;
+    out += part;
+  }
+  cache.removeAll(keys);
+  return out;
+}
+
 // ── Upload Post ───────────────────────────────────────────
 function handleUploadPost(body) {
-  const { token, userId, caption, photoBase64 } = body;
+  const { token, userId, caption, photoBase64, photoUploadId, photoChunks } = body;
   if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -267,8 +302,16 @@ function handleUploadPost(body) {
     }
   }
 
+  // Foto: dari chunks (upload besar) atau langsung (kecil)
+  let photo = photoBase64 || '';
+  if (photoUploadId && photoChunks) {
+    const assembled = assembleChunks(photoUploadId, photoChunks);
+    if (assembled === null) return { success: false, message: 'Upload foto tidak lengkap, coba lagi.' };
+    photo = assembled;
+  }
+
   const postId = 'POST_' + new Date().getTime();
-  const photoRef = photoBase64 && photoBase64.length > 0 ? photoBase64.substring(0, 40000) : '';
+  const photoRef = photo && photo.length > 0 ? photo.substring(0, 45000) : '';
 
   postsSheet.appendRow([
     postId,
@@ -372,7 +415,7 @@ function handleGetFeed(body) {
 
   const postsData = postsSheet.getDataRange().getValues();
   const feed = [];
-  for (let i = postsData.length - 1; i >= 1; i--) {
+  for (let i = postsData.length - 1; i >= 1 && feed.length < 20; i--) {
     if (friendIds.includes(postsData[i][1])) {
       feed.push({
         postId: postsData[i][0],
@@ -389,7 +432,7 @@ function handleGetFeed(body) {
     }
   }
 
-  return { success: true, feed: feed.slice(0, 50) };
+  return { success: true, feed };
 }
 
 // ── Get My Friends ────────────────────────────────────────
