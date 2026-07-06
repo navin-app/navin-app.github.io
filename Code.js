@@ -463,27 +463,35 @@ function handleAddFriendByUserId(body) {
   const usersData = usersSheet.getDataRange().getValues();
   let friendExists = false;
   let friendName = '';
+  let resolvedFriendId = friendUserId;
+  const query = (friendUserId || '').toString().trim().toLowerCase();
+
   for (let i = 1; i < usersData.length; i++) {
-    if (usersData[i][0] === friendUserId) {
+    const rowUserId = (usersData[i][0] || '').toString();
+    const rowEmail = (usersData[i][1] || '').toString().toLowerCase();
+    const rowName = (usersData[i][3] || '').toString().toLowerCase();
+
+    if (rowUserId === friendUserId || rowEmail === query || rowName === query) {
       friendExists = true;
       friendName = usersData[i][3];
+      resolvedFriendId = rowUserId;
       break;
     }
   }
 
-  if (!friendExists) return { success: false, message: 'User tidak ditemukan.' };
-  if (userId === friendUserId) return { success: false, message: 'Tidak bisa add diri sendiri.' };
+  if (!friendExists) return { success: false, message: 'User tidak ditemukan. Coba pakai User ID, email, atau nama lengkap yang persis.' };
+  if (userId === resolvedFriendId) return { success: false, message: 'Tidak bisa add diri sendiri.' };
 
   const friendsData = friendsSheet.getDataRange().getValues();
   for (let i = 1; i < friendsData.length; i++) {
-    if ((friendsData[i][0] === userId && friendsData[i][1] === friendUserId) ||
-        (friendsData[i][0] === friendUserId && friendsData[i][1] === userId)) {
+    if ((friendsData[i][0] === userId && friendsData[i][1] === resolvedFriendId) ||
+        (friendsData[i][0] === resolvedFriendId && friendsData[i][1] === userId)) {
       return { success: false, message: 'Sudah berteman.' };
     }
   }
 
-  friendsSheet.appendRow([userId, friendUserId, 'accepted', new Date().toISOString()]);
-  friendsSheet.appendRow([friendUserId, userId, 'accepted', new Date().toISOString()]);
+  friendsSheet.appendRow([userId, resolvedFriendId, 'accepted', new Date().toISOString()]);
+  friendsSheet.appendRow([resolvedFriendId, userId, 'accepted', new Date().toISOString()]);
 
   return { success: true, message: 'Teman ditambahkan: ' + friendName };
 }
