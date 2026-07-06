@@ -1152,7 +1152,7 @@ function login() {
 
     fetch(API_BASE, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'login', email, password })
     }).then(r => r.text()).then(text => {
         try {
@@ -1179,7 +1179,7 @@ function signup() {
 
     fetch(API_BASE, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'signup', name, email, password })
     }).then(r => r.text()).then(text => {
         try {
@@ -1330,7 +1330,7 @@ function apiCall(action, data = {}) {
     }
     return fetch(API_BASE, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
             action,
             token: currentUser?.token || '',
