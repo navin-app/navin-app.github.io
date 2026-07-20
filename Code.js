@@ -19,7 +19,7 @@ function ensureSheetsExist() {
   let users = ss.getSheetByName(SHEET_USERS);
   if (!users) {
     users = ss.insertSheet(SHEET_USERS);
-    users.appendRow(['userId','email','passwordHash','name','joinDate','lastLogin','level','coins','totalHydration_L','avatarBase64']);
+    users.appendRow(['userId','email','passwordHash','name','joinDate','lastLogin','level','coins','totalHydration_L','avatarBase64','hydrationToken']);
     users.getRange(1,1,1,10).setFontWeight('bold');
   } else {
     const headers = users.getRange(1, 1, 1, users.getLastColumn()).getValues()[0];
@@ -31,12 +31,15 @@ function ensureSheetsExist() {
     if (!headers.includes('avatarBase64')) {
       users.getRange(1, users.getLastColumn() + 1).setValue('avatarBase64');
     }
+    if (!headers.includes('hydrationToken')) {
+      users.getRange(1, users.getLastColumn() + 1).setValue('hydrationToken');
+    }
   }
 
   let posts = ss.getSheetByName(SHEET_POSTS);
   if (!posts) {
     posts = ss.insertSheet(SHEET_POSTS);
-    posts.appendRow(['postId','userId','email','name','photoBase64','caption','timestamp','coins_earned','likes_count','likedBy']);
+    posts.appendRow(['postId','userId','email','name','photoBase64','caption','timestamp','coins_earned','likes_count','likedBy','activity','location']);
     posts.getRange(1,1,1,10).setFontWeight('bold');
   }
 
@@ -232,7 +235,8 @@ function handleGetMyProfile(body) {
           level: usersData[i][6] || 'Movers',
           coins: usersData[i][7] || 0,
           totalHydration_L: usersData[i][8] || 0,
-          avatarBase64: usersData[i][9] || ''
+          avatarBase64: usersData[i][9] || '',
+          hydrationToken: usersData[i][10] || ''
         }
       };
     }
@@ -297,7 +301,7 @@ function assembleChunks(uploadId, totalChunks) {
 
 // ── Upload Post ───────────────────────────────────────────
 function handleUploadPost(body) {
-  const { token, userId, caption, photoBase64, photoUploadId, photoChunks } = body;
+  const { token, userId, caption, photoBase64, photoUploadId, photoChunks, activity, location } = body;
   if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -335,7 +339,9 @@ function handleUploadPost(body) {
     new Date().toISOString(),
     20,
     0,
-    ''
+    '',
+    activity || '',
+    location || ''
   ]);
 
   const usersSheet2 = ss.getSheetByName(SHEET_USERS);
@@ -439,7 +445,9 @@ function handleGetFeed(body) {
         timestamp: postsData[i][6],
         coins_earned: postsData[i][7] || 0,
         likes_count: postsData[i][8] || 0,
-        likedBy: postsData[i][9] || ''
+        likedBy: postsData[i][9] || '',
+        activity: postsData[i][10] || '',
+        location: postsData[i][11] || ''
       });
     }
   }
@@ -575,12 +583,23 @@ function handleUpdateHydration(body) {
         coinsBonus = 5;
       }
 
+      // Token validasi hidrasi: dibuat SEKALI per profil, permanen
+      let hydrationToken = usersData[i][10] || '';
+      let newToken = false;
+      if (!hydrationToken) {
+        hydrationToken = 'NAVIN-' + Utilities.getUuid().replace(/-/g, '').substring(0, 8).toUpperCase();
+        usersSheet.getRange(i + 1, 11).setValue(hydrationToken);
+        newToken = true;
+      }
+
       return {
         success: true,
         message: 'Hydration updated!',
         totalHydration: Math.round(newHydration * 100) / 100,
         dailyGoalReached,
-        coinsBonus
+        coinsBonus,
+        hydrationToken,
+        newToken
       };
     }
   }

@@ -840,6 +840,41 @@ body{
     font-family:'Space Grotesk',sans-serif;
 }
 
+.activity-chip{
+    flex:1;
+    padding:10px 8px;
+    background:var(--dark-gray);
+    border:1px solid rgba(239,251,0,.3);
+    border-radius:20px;
+    color:white;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .2s;
+}
+
+.activity-chip.selected{
+    background:var(--yellow);
+    color:#000;
+    border-color:var(--yellow);
+}
+
+.post-move-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(239,251,0,.12);
+    border:1px solid rgba(239,251,0,.35);
+    color:var(--yellow);
+    padding:4px 12px;
+    border-radius:14px;
+    font-size:12px;
+    font-weight:700;
+    margin-right:8px;
+    margin-bottom:8px;
+}
+
 .upload-btn{
     width:100%;
     padding:12px;
@@ -971,36 +1006,22 @@ body{
     <!-- TOPBAR -->
     <div class="topbar">
         <div class="logo-nav">
-            <svg viewBox="0 0 600 200" style="height:40px;" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 320 80" style="height:38px;" xmlns="http://www.w3.org/2000/svg" aria-label="NAVIN">
                 <defs>
-                    <style>
-                        .logo-tile { fill: #EFFB00; }
-                    </style>
+                    <mask id="logoSlices">
+                        <rect x="0" y="0" width="320" height="80" fill="white"/>
+                        <!-- 2 garis potong diagonal mengikuti kemiringan huruf -->
+                        <rect x="-20" y="26" width="380" height="4" fill="black" transform="skewX(-18)"/>
+                        <rect x="-20" y="52" width="380" height="4" fill="black" transform="skewX(-18)"/>
+                    </mask>
                 </defs>
-                <!-- N -->
-                <polygon class="logo-tile" points="50,60 75,40 95,40 70,60"/>
-                <polygon class="logo-tile" points="50,85 75,65 95,65 70,85"/>
-                <polygon class="logo-tile" points="50,110 75,90 95,90 70,110"/>
-                <polygon class="logo-tile" points="25,85 50,65 70,65 45,85"/>
-                <!-- A -->
-                <polygon class="logo-tile" points="130,60 155,40 175,40 150,60"/>
-                <polygon class="logo-tile" points="130,85 155,65 175,65 150,85"/>
-                <polygon class="logo-tile" points="130,110 155,90 175,90 150,110"/>
-                <polygon class="logo-tile" points="105,85 130,65 150,65 125,85"/>
-                <!-- V -->
-                <polygon class="logo-tile" points="210,60 235,40 255,40 230,60"/>
-                <polygon class="logo-tile" points="210,85 235,65 255,65 230,85"/>
-                <polygon class="logo-tile" points="210,110 235,90 255,90 230,110"/>
-                <polygon class="logo-tile" points="185,85 210,65 230,65 205,85"/>
-                <!-- I -->
-                <polygon class="logo-tile" points="280,60 305,40 325,40 300,60"/>
-                <polygon class="logo-tile" points="280,85 305,65 325,65 300,85"/>
-                <polygon class="logo-tile" points="280,110 305,90 325,90 300,110"/>
-                <!-- N -->
-                <polygon class="logo-tile" points="350,60 375,40 395,40 370,60"/>
-                <polygon class="logo-tile" points="350,85 375,65 395,65 370,85"/>
-                <polygon class="logo-tile" points="350,110 375,90 395,90 370,110"/>
-                <polygon class="logo-tile" points="325,85 350,65 370,65 345,85"/>
+                <text x="160" y="62" mask="url(#logoSlices)"
+                    text-anchor="middle"
+                    font-family="'Space Grotesk','Arial Black',sans-serif"
+                    font-size="58" font-weight="900" font-style="italic"
+                    letter-spacing="2"
+                    fill="#EFFB00"
+                    transform="skewX(-6)">NAVIN</text>
             </svg>
         </div>
         <div class="user-status">
@@ -1049,10 +1070,15 @@ body{
                 </div>
 
                 <div class="upload-section">
-                    <label class="upload-label">Share Your Moment</label>
-                    <input type="file" id="photoInput" class="upload-input" accept="image/*" placeholder="Choose photo">
-                    <input type="text" id="captionInput" class="upload-input" placeholder="Write caption...">
-                    <button class="upload-btn" onclick="uploadPost()">📸 Post Now</button>
+                    <label class="upload-label">Share Your Move</label>
+                    <div style="display:flex;gap:8px;margin-bottom:10px;">
+                        <button type="button" class="activity-chip" data-activity="Run" onclick="pickActivity(this)">🏃 Run</button>
+                        <button type="button" class="activity-chip" data-activity="Walk" onclick="pickActivity(this)">🚶 Walk</button>
+                        <button type="button" class="activity-chip" data-activity="Bike" onclick="pickActivity(this)">🚴 Bike</button>
+                    </div>
+                    <input type="text" id="captionInput" class="upload-input" placeholder="Ceritakan move kamu...">
+                    <button type="button" class="upload-btn" id="locationBtn" style="margin-top:8px;background:transparent;border:1px solid rgba(239,251,0,.4);" onclick="pickLocation()">📍 Tambah Lokasi</button>
+                    <button class="upload-btn" style="margin-top:8px;" onclick="uploadPost()">⚡ Post Now</button>
                 </div>
 
                 <div class="feed-container" id="feedContainer">
@@ -1118,8 +1144,12 @@ body{
                         <div class="hydration-progress">
                             <div class="hydration-progress-bar" id="hydrationBar" style="width:0%"></div>
                         </div>
-                        <input type="number" id="hydrationInput" class="upload-input" placeholder="Add hydration (ml)" style="margin-top:12px;">
-                        <button class="upload-btn" onclick="addHydration()" style="margin-top:8px;">💧 Log Hydration</button>
+                        <button class="upload-btn" style="margin-top:12px;font-size:15px;" onclick="submitHydration500()">💧 500ml — Submit Validasi</button>
+                        <div id="hydrationTokenBox" style="display:none;margin-top:12px;padding:14px;border:1px dashed var(--yellow);border-radius:8px;text-align:center;">
+                            <div style="font-size:11px;opacity:.7;margin-bottom:6px;">🎟️ TOKEN VALIDASI HIDRASI ANDA</div>
+                            <div id="hydrationTokenValue" style="font-size:18px;font-weight:800;letter-spacing:2px;color:var(--yellow);"></div>
+                            <button class="upload-btn" style="margin-top:10px;padding:6px 14px;font-size:12px;" onclick="copyHydrationToken()">📋 Salin Token</button>
+                        </div>
                     </div>
 
                     <div class="profile-section">
@@ -1426,6 +1456,7 @@ function loadProfile() {
             document.getElementById('profileHydration').textContent = Math.round((p.totalHydration_L || 0) * 10) / 10;
             document.getElementById('hydrationMonth').textContent = Math.round((p.totalHydration_L || 0) * 10) / 10 + 'L';
             document.getElementById('levelDisplay').classList.toggle('aoc', isAOC);
+            if (p.hydrationToken) showHydrationToken(p.hydrationToken);
 
             const avatarEl = document.getElementById('profileAvatar');
             if (p.avatarBase64) {
@@ -1534,6 +1565,10 @@ function loadFeed() {
                     </div>
                     ${post.photoBase64 ? `<img src="${post.photoBase64}" class="post-image" loading="lazy">` : ''}
                     <div class="post-body">
+                        ${post.activity || post.location ? `<div style="margin-bottom:8px;">
+                            ${post.activity ? `<span class="post-move-badge">${post.activity === 'Run' ? '🏃' : post.activity === 'Walk' ? '🚶' : '🚴'} ${post.activity}</span>` : ''}
+                            ${post.location ? `<span class="post-move-badge">📍 ${post.location}</span>` : ''}
+                        </div>` : ''}
                         <div class="post-text">${post.caption || ''}</div>
                         <div class="post-stats">
                             <div class="post-stat-item">👍 <strong>${post.likes_count || 0}</strong> Likes</div>
@@ -1550,40 +1585,76 @@ function loadFeed() {
     });
 }
 
-async function uploadPost() {
-    const caption = document.getElementById('captionInput').value;
-    const photoInput = document.getElementById('photoInput');
-    const btn = document.querySelector('.upload-section .upload-btn');
+// ─── SHARE YOUR MOVE (text-only, ringan untuk mobile) ───────
+let selectedActivity = '';
+let selectedLocation = '';
 
-    if (!caption && !photoInput.files[0]) {
-        alert('Add caption or photo!');
+function pickActivity(btn) {
+    const wasSelected = btn.classList.contains('selected');
+    document.querySelectorAll('.activity-chip').forEach(c => c.classList.remove('selected'));
+    if (!wasSelected) {
+        btn.classList.add('selected');
+        selectedActivity = btn.dataset.activity;
+    } else {
+        selectedActivity = '';
+    }
+}
+
+function pickLocation() {
+    const btn = document.getElementById('locationBtn');
+    if (selectedLocation) {
+        // Klik lagi = hapus lokasi
+        selectedLocation = '';
+        btn.textContent = '📍 Tambah Lokasi';
+        return;
+    }
+    if (!navigator.geolocation) return alert('Browser tidak mendukung lokasi.');
+
+    btn.textContent = '📍 Mencari lokasi...';
+    navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        // Reverse geocode GRATIS tanpa API key (BigDataCloud client API)
+        fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=id`)
+            .then(r => r.json())
+            .then(geo => {
+                const parts = [geo.locality, geo.city, geo.principalSubdivision].filter(Boolean);
+                selectedLocation = parts.slice(0, 2).join(', ') || (latitude.toFixed(3) + ', ' + longitude.toFixed(3));
+                btn.textContent = '📍 ' + selectedLocation + ' ✕';
+            })
+            .catch(() => {
+                selectedLocation = latitude.toFixed(3) + ', ' + longitude.toFixed(3);
+                btn.textContent = '📍 ' + selectedLocation + ' ✕';
+            });
+    }, err => {
+        btn.textContent = '📍 Tambah Lokasi';
+        alert('Tidak bisa akses lokasi: ' + err.message + '\nPastikan izin lokasi diaktifkan di browser.');
+    }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
+}
+
+async function uploadPost() {
+    const caption = document.getElementById('captionInput').value.trim();
+    const btn = document.querySelector('.upload-section .upload-btn:last-of-type');
+
+    if (!caption && !selectedActivity) {
+        alert('Tulis caption atau pilih aktivitas dulu!');
         return;
     }
 
     const originalLabel = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Memproses...'; }
+    if (btn) { btn.disabled = true; btn.textContent = '💾 Menyimpan...'; }
 
     try {
-        let payload = { caption };
-
-        if (photoInput.files[0]) {
-            const dataUrl = await compressImage(photoInput.files[0], 420, 0.55);
-            if (dataUrl.length <= CHUNK_SIZE) {
-                payload.photoBase64 = dataUrl;
-            } else {
-                const { uploadId, total } = await uploadInChunks(dataUrl, (i, t) => {
-                    if (btn) btn.textContent = `📤 Mengunggah foto ${i}/${t}...`;
-                });
-                payload.photoUploadId = uploadId;
-                payload.photoChunks = total;
-            }
-        }
-
-        if (btn) btn.textContent = '💾 Menyimpan post...';
-        const data = await apiCall('uploadPost', payload);
+        const data = await apiCall('uploadPost', {
+            caption,
+            activity: selectedActivity,
+            location: selectedLocation
+        });
         if (data.success) {
             document.getElementById('captionInput').value = '';
-            photoInput.value = '';
+            selectedActivity = '';
+            selectedLocation = '';
+            document.querySelectorAll('.activity-chip').forEach(c => c.classList.remove('selected'));
+            document.getElementById('locationBtn').textContent = '📍 Tambah Lokasi';
             loadFeed();
             loadProfile();
         } else {
@@ -1670,16 +1741,47 @@ function addFriendById() {
     });
 }
 
-function addHydration() {
-    const ml = parseInt(document.getElementById('hydrationInput').value);
-    if (!ml || ml <= 0) return alert('Enter valid hydration!');
+function addHydration(mlOverride) {
+    const ml = mlOverride;
+    if (!ml || ml <= 0) return;
 
     apiCall('updateHydration', { hydration_ml: ml }).then(data => {
         if (data.success) {
-            document.getElementById('hydrationInput').value = '';
+            if (data.hydrationToken) {
+                showHydrationToken(data.hydrationToken);
+                if (data.newToken) {
+                    alert('🎉 Selamat! Token validasi hidrasi Anda: ' + data.hydrationToken + '\n\nToken ini permanen, hanya 1 per profil. Tersimpan di bagian Hydration Goal.');
+                }
+            }
+            if (data.dailyGoalReached) {
+                alert('🏆 Daily goal 1L tercapai! +' + data.coinsBonus + ' coins');
+            }
             loadProfile();
+        } else {
+            alert(data.message || 'Gagal update hidrasi');
         }
     });
+}
+
+// Quick submit 500ml untuk validasi hidrasi
+function submitHydration500() {
+    addHydration(500);
+}
+
+function showHydrationToken(token) {
+    const box = document.getElementById('hydrationTokenBox');
+    const val = document.getElementById('hydrationTokenValue');
+    if (box && val && token) {
+        val.textContent = token;
+        box.style.display = 'block';
+    }
+}
+
+function copyHydrationToken() {
+    const val = document.getElementById('hydrationTokenValue').textContent;
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => alert('Token disalin: ' + val))
+        .catch(() => prompt('Salin token ini:', val));
 }
 
 // ─── CHAT (persisten di Sheets, friend & group) ─────────────
