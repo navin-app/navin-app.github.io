@@ -39,7 +39,7 @@ function ensureSheetsExist() {
   let posts = ss.getSheetByName(SHEET_POSTS);
   if (!posts) {
     posts = ss.insertSheet(SHEET_POSTS);
-    posts.appendRow(['postId','userId','email','name','photoBase64','caption','timestamp','coins_earned','likes_count','likedBy','activity','location']);
+    posts.appendRow(['postId','userId','email','name','photoBase64','caption','timestamp','coins_earned','likes_count','likedBy','activity','location','distance_km','duration_s']);
     posts.getRange(1,1,1,10).setFontWeight('bold');
   }
 
@@ -301,7 +301,7 @@ function assembleChunks(uploadId, totalChunks) {
 
 // ── Upload Post ───────────────────────────────────────────
 function handleUploadPost(body) {
-  const { token, userId, caption, photoBase64, photoUploadId, photoChunks, activity, location } = body;
+  const { token, userId, caption, photoBase64, photoUploadId, photoChunks, activity, location, distance_km, duration_s } = body;
   if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -341,7 +341,9 @@ function handleUploadPost(body) {
     0,
     '',
     activity || '',
-    location || ''
+    location || '',
+    distance_km || '',
+    duration_s || ''
   ]);
 
   const usersSheet2 = ss.getSheetByName(SHEET_USERS);
@@ -447,7 +449,9 @@ function handleGetFeed(body) {
         likes_count: postsData[i][8] || 0,
         likedBy: postsData[i][9] || '',
         activity: postsData[i][10] || '',
-        location: postsData[i][11] || ''
+        location: postsData[i][11] || '',
+        distance_km: postsData[i][12] || '',
+        duration_s: postsData[i][13] || ''
       });
     }
   }

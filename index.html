@@ -1076,8 +1076,30 @@ body{
                         <button type="button" class="activity-chip" data-activity="Walk" onclick="pickActivity(this)">🚶 Walk</button>
                         <button type="button" class="activity-chip" data-activity="Bike" onclick="pickActivity(this)">🚴 Bike</button>
                     </div>
+                    <!-- MOVE TRACKER: GPS live tracking seperti Strava -->
+                    <div id="trackerPanel" style="display:none;background:var(--dark-gray);border:1px solid rgba(239,251,0,.4);border-radius:12px;padding:16px;margin-bottom:10px;text-align:center;">
+                        <div style="display:flex;justify-content:space-around;">
+                            <div>
+                                <div style="font-size:11px;opacity:.6;">DISTANCE</div>
+                                <div id="trkDistance" style="font-size:26px;font-weight:800;color:var(--yellow);">0.00 <span style="font-size:13px;">km</span></div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px;opacity:.6;">TIME</div>
+                                <div id="trkTime" style="font-size:26px;font-weight:800;color:var(--yellow);">00:00</div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px;opacity:.6;">PACE</div>
+                                <div id="trkPace" style="font-size:26px;font-weight:800;color:var(--yellow);">-</div>
+                            </div>
+                        </div>
+                        <div id="trkStatus" style="font-size:11px;opacity:.6;margin-top:8px;">📡 Mencari sinyal GPS...</div>
+                    </div>
+                    <div id="moveResult" style="display:none;margin-bottom:10px;"></div>
                     <input type="text" id="captionInput" class="upload-input" placeholder="Ceritakan move kamu...">
-                    <button type="button" class="upload-btn" id="locationBtn" style="margin-top:8px;background:transparent;border:1px solid rgba(239,251,0,.4);" onclick="pickLocation()">📍 Tambah Lokasi</button>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="upload-btn" id="trackerBtn" style="flex:1;margin-top:0;" onclick="toggleTracker()">▶️ Start Move</button>
+                        <button type="button" class="upload-btn" id="locationBtn" style="flex:1;margin-top:0;background:transparent;border:1px solid rgba(239,251,0,.4);" onclick="pickLocation()">📍 Lokasi</button>
+                    </div>
                     <button class="upload-btn" style="margin-top:8px;" onclick="uploadPost()">⚡ Post Now</button>
                 </div>
 
@@ -1569,6 +1591,11 @@ function loadFeed() {
                             ${post.activity ? `<span class="post-move-badge">${post.activity === 'Run' ? '🏃' : post.activity === 'Walk' ? '🚶' : '🚴'} ${post.activity}</span>` : ''}
                             ${post.location ? `<span class="post-move-badge">📍 ${post.location}</span>` : ''}
                         </div>` : ''}
+                        ${post.distance_km ? `<div style="display:flex;gap:20px;margin-bottom:10px;padding:12px;background:rgba(2,102,255,.1);border-radius:10px;">
+                            <div><div style="font-size:10px;opacity:.6;">DISTANCE</div><div style="font-size:20px;font-weight:800;">${post.distance_km} km</div></div>
+                            ${post.duration_s ? `<div><div style="font-size:10px;opacity:.6;">TIME</div><div style="font-size:20px;font-weight:800;">${fmtDuration(post.duration_s)}</div></div>` : ''}
+                            ${post.duration_s && post.distance_km > 0 ? `<div><div style="font-size:10px;opacity:.6;">PACE</div><div style="font-size:20px;font-weight:800;">${(() => { const p = (post.duration_s/60)/post.distance_km; return Math.floor(p) + "'" + String(Math.round((p%1)*60)).padStart(2,'0') + '"'; })()}</div></div>` : ''}
+                        </div>` : ''}
                         <div class="post-text">${post.caption || ''}</div>
                         <div class="post-stats">
                             <div class="post-stat-item">👍 <strong>${post.likes_count || 0}</strong> Likes</div>
@@ -1631,10 +1658,115 @@ function pickLocation() {
     }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
 }
 
+// ─── MOVE TRACKER: GPS live tracking (gratis, di browser) ───
+let tracking = false;
+let trackWatchId = null;
+let trackTimer = null;
+let trackStart = 0;
+let trackDistanceKm = 0;
+let trackLastPos = null;
+let trackedResult = null;   // { distance_km, duration_s }
+let wakeLock = null;
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+    const R = 6371, rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*rad) * Math.cos(lat2*rad) * Math.sin(dLon/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function fmtDuration(s) {
+    s = Math.round(s);
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    if (h > 0) return h + 'j ' + m + 'm';
+    if (m > 0) return m + 'm ' + (sec < 10 ? '0' : '') + sec + 's';
+    return sec + 's';
+}
+
+function toggleTracker() {
+    tracking ? stopTracker() : startTracker();
+}
+
+async function startTracker() {
+    if (!navigator.geolocation) return alert('Browser tidak mendukung GPS.');
+    if (!selectedActivity) return alert('Pilih aktivitas dulu (Run/Walk/Bike)!');
+
+    tracking = true;
+    trackDistanceKm = 0;
+    trackLastPos = null;
+    trackStart = Date.now();
+    trackedResult = null;
+
+    document.getElementById('trackerPanel').style.display = 'block';
+    document.getElementById('moveResult').style.display = 'none';
+    document.getElementById('trackerBtn').textContent = '⏹ Stop';
+    document.getElementById('trkStatus').textContent = '📡 Mencari sinyal GPS...';
+
+    // Jaga layar tetap nyala saat tracking (Chrome/Android)
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+
+    trackTimer = setInterval(() => {
+        const s = (Date.now() - trackStart) / 1000;
+        const m = Math.floor(s/60), sec = Math.floor(s%60);
+        document.getElementById('trkTime').textContent =
+            (m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
+        if (trackDistanceKm > 0.05) {
+            const paceMin = (s/60) / trackDistanceKm;
+            document.getElementById('trkPace').textContent =
+                Math.floor(paceMin) + "'" + String(Math.round((paceMin % 1) * 60)).padStart(2,'0') + '"';
+        }
+    }, 1000);
+
+    trackWatchId = navigator.geolocation.watchPosition(pos => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        if (accuracy > 50) return; // abaikan titik GPS tidak akurat
+        document.getElementById('trkStatus').textContent = '🟢 GPS aktif (akurasi ' + Math.round(accuracy) + 'm) — layar harus tetap nyala';
+        if (trackLastPos) {
+            const d = haversineKm(trackLastPos.lat, trackLastPos.lon, latitude, longitude);
+            if (d > 0.003) { // filter jitter GPS diam di tempat
+                trackDistanceKm += d;
+                trackLastPos = { lat: latitude, lon: longitude };
+            }
+        } else {
+            trackLastPos = { lat: latitude, lon: longitude };
+        }
+        document.getElementById('trkDistance').innerHTML =
+            trackDistanceKm.toFixed(2) + ' <span style="font-size:13px;">km</span>';
+    }, err => {
+        document.getElementById('trkStatus').textContent = '⚠️ ' + err.message + ' — pastikan izin lokasi aktif';
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 2000 });
+}
+
+function stopTracker() {
+    tracking = false;
+    if (trackWatchId !== null) navigator.geolocation.clearWatch(trackWatchId);
+    clearInterval(trackTimer);
+    if (wakeLock) { wakeLock.release().catch(()=>{}); wakeLock = null; }
+
+    const duration_s = Math.round((Date.now() - trackStart) / 1000);
+    trackedResult = { distance_km: Math.round(trackDistanceKm * 100) / 100, duration_s };
+
+    document.getElementById('trackerPanel').style.display = 'none';
+    document.getElementById('trackerBtn').textContent = '▶️ Start Move';
+
+    const res = document.getElementById('moveResult');
+    res.style.display = 'block';
+    res.innerHTML = `
+        <span class="post-move-badge">📏 ${trackedResult.distance_km} km</span>
+        <span class="post-move-badge">⏱ ${fmtDuration(duration_s)}</span>
+        <span class="post-move-badge" style="cursor:pointer;" onclick="trackedResult=null;this.parentElement.style.display='none';">✕ hapus</span>
+    `;
+    if (!document.getElementById('captionInput').value) {
+        document.getElementById('captionInput').value =
+            (selectedActivity === 'Run' ? 'Morning Run' : selectedActivity === 'Bike' ? 'Morning Ride' : 'Morning Walk') + ' 💪';
+    }
+}
+
 async function uploadPost() {
     const caption = document.getElementById('captionInput').value.trim();
     const btn = document.querySelector('.upload-section .upload-btn:last-of-type');
 
+    if (tracking) return alert('Stop tracking dulu sebelum post!');
     if (!caption && !selectedActivity) {
         alert('Tulis caption atau pilih aktivitas dulu!');
         return;
@@ -1647,14 +1779,18 @@ async function uploadPost() {
         const data = await apiCall('uploadPost', {
             caption,
             activity: selectedActivity,
-            location: selectedLocation
+            location: selectedLocation,
+            distance_km: trackedResult ? trackedResult.distance_km : '',
+            duration_s: trackedResult ? trackedResult.duration_s : ''
         });
         if (data.success) {
             document.getElementById('captionInput').value = '';
             selectedActivity = '';
             selectedLocation = '';
+            trackedResult = null;
+            document.getElementById('moveResult').style.display = 'none';
             document.querySelectorAll('.activity-chip').forEach(c => c.classList.remove('selected'));
-            document.getElementById('locationBtn').textContent = '📍 Tambah Lokasi';
+            document.getElementById('locationBtn').textContent = '📍 Lokasi';
             loadFeed();
             loadProfile();
         } else {
