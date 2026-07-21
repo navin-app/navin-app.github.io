@@ -4,12 +4,19 @@
 // ============================================================
 
 const SPREADSHEET_ID = '1aHZ-GpFx-uM94Sbycf6r5b0JELqb07NxdSBpsb1AWrg';
-const SHEET_USERS    = 'Users';
-const SHEET_POSTS    = 'Posts';
-const SHEET_FRIENDS  = 'Friends';
-const SHEET_GROUPS   = 'Groups';
-const SHEET_EVENTS   = 'Events';
-const SHEET_CHATS    = 'Chats';
+const SHEET_USERS     = 'Users';
+const SHEET_POSTS     = 'Posts';
+const SHEET_FRIENDS   = 'Friends';
+const SHEET_GROUPS    = 'Groups';
+const SHEET_EVENTS    = 'Events';
+const SHEET_CHATS     = 'Chats';
+const SHEET_REFERRALS = 'ReferralCodes';
+const SHEET_REF_USAGE = 'ReferralUsage';
+const SHEET_INBOX     = 'Inbox';
+
+// Poin
+const PTS_HYDRATION_SUBMIT = 25;  // Mover/AoC submit 500ml dengan kode valid
+const PTS_REFERRAL_OWNER   = 2;   // AoC pemilik kode, tiap kode dipakai
 
 // ── Ensure sheets exist ────────────────────────────────────
 function ensureSheetsExist() {
@@ -70,6 +77,27 @@ function ensureSheetsExist() {
     chats.appendRow(['chatKey','chatType','senderId','senderName','message','timestamp']);
     chats.getRange(1,1,1,6).setFontWeight('bold');
   }
+
+  let referrals = ss.getSheetByName(SHEET_REFERRALS);
+  if (!referrals) {
+    referrals = ss.insertSheet(SHEET_REFERRALS);
+    referrals.appendRow(['code','ownerId','ownerName','status','durationDays','requestedAt','approvedAt','expiresAt','note']);
+    referrals.getRange(1,1,1,9).setFontWeight('bold');
+  }
+
+  let refUsage = ss.getSheetByName(SHEET_REF_USAGE);
+  if (!refUsage) {
+    refUsage = ss.insertSheet(SHEET_REF_USAGE);
+    refUsage.appendRow(['code','usedBy','usedByName','ownerId','usedAt']);
+    refUsage.getRange(1,1,1,5).setFontWeight('bold');
+  }
+
+  let inbox = ss.getSheetByName(SHEET_INBOX);
+  if (!inbox) {
+    inbox = ss.insertSheet(SHEET_INBOX);
+    inbox.appendRow(['inboxId','userId','type','title','message','read','createdAt']);
+    inbox.getRange(1,1,1,7).setFontWeight('bold');
+  }
   } catch (err) {
     Logger.log('Sheet initialization error: ' + err.message);
   }
@@ -102,6 +130,14 @@ function processRequest(payload) {
   else if (action === 'getGroupMembers')result = handleGetGroupMembers(payload);
   else if (action === 'sendChat')       result = handleSendChat(payload);
   else if (action === 'getChat')        result = handleGetChat(payload);
+  else if (action === 'requestReferralCode') result = handleRequestReferralCode(payload);
+  else if (action === 'getMyReferralCodes')  result = handleGetMyReferralCodes(payload);
+  else if (action === 'getPendingReferrals') result = handleGetPendingReferrals(payload);
+  else if (action === 'approveReferralCode') result = handleApproveReferralCode(payload);
+  else if (action === 'rejectReferralCode')  result = handleRejectReferralCode(payload);
+  else if (action === 'submitHydrationCode') result = handleSubmitHydrationCode(payload);
+  else if (action === 'getInbox')       result = handleGetInbox(payload);
+  else if (action === 'markInboxRead')  result = handleMarkInboxRead(payload);
   else                                  result = { success: false, message: 'Unknown action: ' + action };
 
   return result;
@@ -811,6 +847,303 @@ function handleGetChat(body) {
   messages.reverse();
 
   return { success: true, messages };
+}
+
+// ============================================================
+//  REFERRAL CODE SYSTEM  (Admin → AoC → Movers)
+// ============================================================
+
+function genReferralCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // tanpa 0/O/1/I biar tidak ambigu
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, Utilities.getUuid());
+  let s = '';
+  for (let i = 0; i < 6; i++) s += chars[(bytes[i] & 0xFF) % chars.length];
+  return 'AOC-' + s;
+}
+
+function addInbox(userId, type, title, message) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const inbox = ss.getSheetByName(SHEET_INBOX);
+  if (!inbox) return;
+  inbox.appendRow(['INB_' + Utilities.getUuid().substring(0, 12), userId, type, title, message, false, new Date().toISOString()]);
+}
+
+function getUserLevel(usersData, userId) {
+  for (let i = 1; i < usersData.length; i++) {
+    if (usersData[i][0] === userId) return (usersData[i][6] || 'Movers');
+  }
+  return 'Movers';
+}
+
+// ── AoC: Request Referral Code ─────────────────────────────
+function handleRequestReferralCode(body) {
+  const { token, userId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const usersData = ss.getSheetByName(SHEET_USERS).getDataRange().getValues();
+  let userName = '';
+  for (let i = 1; i < usersData.length; i++) if (usersData[i][0] === userId) userName = usersData[i][3];
+
+  if (getUserLevel(usersData, userId).toUpperCase() !== 'AOC') {
+    return { success: false, message: 'Hanya AOC yang bisa request referral code.' };
+  }
+
+  const refSheet = ss.getSheetByName(SHEET_REFERRALS);
+  const refData = refSheet.getDataRange().getValues();
+  for (let i = 1; i < refData.length; i++) {
+    if (refData[i][1] === userId && refData[i][3] === 'pending') {
+      return { success: false, message: 'Masih ada request pending. Tunggu approval admin dulu.' };
+    }
+  }
+
+  const code = genReferralCode();
+  refSheet.appendRow([code, userId, userName, 'pending', '', new Date().toISOString(), '', '', '']);
+  return { success: true, message: 'Request terkirim! Menunggu approval admin.', code };
+}
+
+// ── AoC: Get My Referral Codes ─────────────────────────────
+function handleGetMyReferralCodes(body) {
+  const { token, userId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const refSheet = ss.getSheetByName(SHEET_REFERRALS);
+  if (!refSheet) return { success: true, codes: [] };
+  const refData = refSheet.getDataRange().getValues();
+  const usageSheet = ss.getSheetByName(SHEET_REF_USAGE);
+  const usageData = usageSheet ? usageSheet.getDataRange().getValues() : [];
+
+  const codes = [];
+  const now = new Date();
+  for (let i = 1; i < refData.length; i++) {
+    if (refData[i][1] === userId) {
+      let status = refData[i][3];
+      const expiresAt = refData[i][7];
+      if (status === 'active' && expiresAt && new Date(expiresAt) < now) status = 'expired';
+      const code = (refData[i][0] || '').toString().toUpperCase();
+      let usedCount = 0;
+      for (let j = 1; j < usageData.length; j++) {
+        if ((usageData[j][0] || '').toString().toUpperCase() === code) usedCount++;
+      }
+      codes.push({
+        code: refData[i][0], status, durationDays: refData[i][4],
+        approvedAt: refData[i][6], expiresAt, usedCount, note: refData[i][8] || ''
+      });
+    }
+  }
+  codes.reverse();
+  return { success: true, codes };
+}
+
+// ── Admin: List Pending Requests ───────────────────────────
+function handleGetPendingReferrals(body) {
+  const { token, userId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const usersData = ss.getSheetByName(SHEET_USERS).getDataRange().getValues();
+  if (getUserLevel(usersData, userId).toUpperCase() !== 'ADMIN') {
+    return { success: false, message: 'Hanya Admin.' };
+  }
+
+  const refData = ss.getSheetByName(SHEET_REFERRALS).getDataRange().getValues();
+  const pending = [];
+  for (let i = 1; i < refData.length; i++) {
+    if (refData[i][3] === 'pending') {
+      pending.push({ code: refData[i][0], ownerId: refData[i][1], ownerName: refData[i][2], requestedAt: refData[i][5] });
+    }
+  }
+  return { success: true, pending, isAdmin: true };
+}
+
+// ── Admin: Approve Referral Code ───────────────────────────
+function handleApproveReferralCode(body) {
+  const { token, userId, code, durationDays } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const usersData = ss.getSheetByName(SHEET_USERS).getDataRange().getValues();
+  if (getUserLevel(usersData, userId).toUpperCase() !== 'ADMIN') {
+    return { success: false, message: 'Hanya Admin.' };
+  }
+
+  const days = parseInt(durationDays) || 7;
+  const refSheet = ss.getSheetByName(SHEET_REFERRALS);
+  const refData = refSheet.getDataRange().getValues();
+  const target = (code || '').toString().toUpperCase();
+  for (let i = 1; i < refData.length; i++) {
+    if ((refData[i][0] || '').toString().toUpperCase() === target) {
+      const now = new Date();
+      const exp = new Date(now.getTime() + days * 24 * 3600 * 1000);
+      refSheet.getRange(i + 1, 4).setValue('active');
+      refSheet.getRange(i + 1, 5).setValue(days);
+      refSheet.getRange(i + 1, 7).setValue(now.toISOString());
+      refSheet.getRange(i + 1, 8).setValue(exp.toISOString());
+      addInbox(refData[i][1], 'referral_approved', '✅ Referral Code Disetujui',
+        'Kode ' + refData[i][0] + ' aktif ' + days + ' hari (s/d ' + exp.toLocaleDateString('id-ID') + '). Bagikan ke Movers!');
+      return { success: true, message: 'Approved! Kode aktif ' + days + ' hari.' };
+    }
+  }
+  return { success: false, message: 'Kode tidak ditemukan.' };
+}
+
+// ── Admin: Reject Referral Code ────────────────────────────
+function handleRejectReferralCode(body) {
+  const { token, userId, code, note } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const usersData = ss.getSheetByName(SHEET_USERS).getDataRange().getValues();
+  if (getUserLevel(usersData, userId).toUpperCase() !== 'ADMIN') {
+    return { success: false, message: 'Hanya Admin.' };
+  }
+
+  const refSheet = ss.getSheetByName(SHEET_REFERRALS);
+  const refData = refSheet.getDataRange().getValues();
+  const target = (code || '').toString().toUpperCase();
+  for (let i = 1; i < refData.length; i++) {
+    if ((refData[i][0] || '').toString().toUpperCase() === target) {
+      refSheet.getRange(i + 1, 4).setValue('rejected');
+      refSheet.getRange(i + 1, 9).setValue(note || '');
+      addInbox(refData[i][1], 'referral_rejected', '❌ Referral Code Ditolak',
+        'Kode ' + refData[i][0] + ' ditolak admin.' + (note ? ' Alasan: ' + note : ''));
+      return { success: true, message: 'Ditolak.' };
+    }
+  }
+  return { success: false, message: 'Kode tidak ditemukan.' };
+}
+
+// ── Mover/AoC: Submit 500ml dengan Referral Code ───────────
+function handleSubmitHydrationCode(body) {
+  const { token, userId, referralCode } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+  if (!referralCode || !referralCode.trim()) return { success: false, message: 'Masukkan referral code dulu.' };
+
+  const code = referralCode.trim().toUpperCase();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const refSheet = ss.getSheetByName(SHEET_REFERRALS);
+  const usageSheet = ss.getSheetByName(SHEET_REF_USAGE);
+  const usersSheet = ss.getSheetByName(SHEET_USERS);
+
+  // 1. Cari & validasi kode
+  const refData = refSheet.getDataRange().getValues();
+  let codeRow = -1, ownerId = '', status = '', expiresAt = null;
+  for (let i = 1; i < refData.length; i++) {
+    if ((refData[i][0] || '').toString().toUpperCase() === code) {
+      codeRow = i; ownerId = refData[i][1]; status = refData[i][3]; expiresAt = refData[i][7];
+      break;
+    }
+  }
+  if (codeRow === -1) return { success: false, message: 'Referral code tidak ditemukan.' };
+  if (status === 'pending')  return { success: false, message: 'Kode belum di-approve admin.' };
+  if (status === 'rejected') return { success: false, message: 'Kode ini ditolak admin.' };
+  if (status !== 'active')   return { success: false, message: 'Kode tidak aktif (status: ' + status + ').' };
+  if (expiresAt && new Date(expiresAt) < new Date()) {
+    refSheet.getRange(codeRow + 1, 4).setValue('expired');
+    addInbox(ownerId, 'referral_expired', '⌛ Referral Code Expired', 'Kode ' + code + ' sudah kedaluwarsa.');
+    return { success: false, message: 'Referral code sudah expired.' };
+  }
+
+  // 2. Cek pemakaian: 1 kode hanya 1x per profil
+  const usageData = usageSheet.getDataRange().getValues();
+  for (let i = 1; i < usageData.length; i++) {
+    if ((usageData[i][0] || '').toString().toUpperCase() === code && usageData[i][1] === userId) {
+      return { success: false, message: 'Kamu sudah pakai kode ini. 1 kode hanya bisa dipakai 1x per profil.' };
+    }
+  }
+
+  // 3. Cari index user & owner
+  const usersData = usersSheet.getDataRange().getValues();
+  let userIdx = -1, ownerIdx = -1, userName = '';
+  for (let i = 1; i < usersData.length; i++) {
+    if (usersData[i][0] === userId)  { userIdx = i; userName = usersData[i][3]; }
+    if (usersData[i][0] === ownerId) ownerIdx = i;
+  }
+  if (userIdx === -1) return { success: false, message: 'User tidak ditemukan.' };
+
+  // 4. Tambah hidrasi 0.5L
+  const curHydration = usersData[userIdx][8] || 0;
+  const newHydration = curHydration + 0.5;
+  usersSheet.getRange(userIdx + 1, 9).setValue(newHydration);
+
+  // 5. Poin
+  if (ownerIdx === userIdx) {
+    // AoC pakai kode sendiri: +25 (submit) +2 (owner)
+    const c = usersData[userIdx][7] || 0;
+    usersSheet.getRange(userIdx + 1, 8).setValue(c + PTS_HYDRATION_SUBMIT + PTS_REFERRAL_OWNER);
+  } else {
+    const cu = usersData[userIdx][7] || 0;
+    usersSheet.getRange(userIdx + 1, 8).setValue(cu + PTS_HYDRATION_SUBMIT);
+    if (ownerIdx !== -1) {
+      const co = usersData[ownerIdx][7] || 0;
+      usersSheet.getRange(ownerIdx + 1, 8).setValue(co + PTS_REFERRAL_OWNER);
+    }
+  }
+
+  // 6. Catat pemakaian
+  usageSheet.appendRow([code, userId, userName, ownerId, new Date().toISOString()]);
+
+  // 7. Inbox receipt ke user + notif ke owner
+  addInbox(userId, 'hydration_receipt', '💧 Bukti Hidrasi',
+    'Submit 500ml tervalidasi dengan kode ' + code + '. +' + PTS_HYDRATION_SUBMIT + ' poin! Total hidrasi: ' + (Math.round(newHydration * 100) / 100) + 'L');
+  if (ownerId && ownerId !== userId) {
+    addInbox(ownerId, 'referral_used', '🎉 Referral Code Dipakai',
+      userName + ' memakai kode ' + code + '. +' + PTS_REFERRAL_OWNER + ' poin untuk kamu!');
+  }
+
+  // 8. Hydration token (fitur lama, 1 per profil)
+  let hydrationToken = usersData[userIdx][10] || '';
+  if (!hydrationToken) {
+    hydrationToken = 'NAVIN-' + Utilities.getUuid().replace(/-/g, '').substring(0, 8).toUpperCase();
+    usersSheet.getRange(userIdx + 1, 11).setValue(hydrationToken);
+  }
+
+  return {
+    success: true,
+    message: 'Hidrasi tervalidasi! +' + PTS_HYDRATION_SUBMIT + ' poin',
+    coinsEarned: PTS_HYDRATION_SUBMIT,
+    totalHydration: Math.round(newHydration * 100) / 100,
+    hydrationToken
+  };
+}
+
+// ── Get Inbox ──────────────────────────────────────────────
+function handleGetInbox(body) {
+  const { token, userId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const inboxSheet = ss.getSheetByName(SHEET_INBOX);
+  if (!inboxSheet) return { success: true, inbox: [], unread: 0 };
+  const data = inboxSheet.getDataRange().getValues();
+  const items = [];
+  let unread = 0;
+  for (let i = data.length - 1; i >= 1 && items.length < 50; i--) {
+    if (data[i][1] === userId) {
+      const read = data[i][5] === true || data[i][5] === 'TRUE' || data[i][5] === 'true';
+      if (!read) unread++;
+      items.push({ inboxId: data[i][0], type: data[i][2], title: data[i][3], message: data[i][4], read, createdAt: data[i][6] });
+    }
+  }
+  return { success: true, inbox: items, unread };
+}
+
+// ── Mark Inbox Read ────────────────────────────────────────
+function handleMarkInboxRead(body) {
+  const { token, userId, inboxId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const inboxSheet = ss.getSheetByName(SHEET_INBOX);
+  if (!inboxSheet) return { success: true };
+  const data = inboxSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === userId && (!inboxId || data[i][0] === inboxId)) {
+      if (data[i][5] !== true) inboxSheet.getRange(i + 1, 6).setValue(true);
+    }
+  }
+  return { success: true };
 }
 
 // ── Helpers ───────────────────────────────────────────────

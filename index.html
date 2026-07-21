@@ -70,6 +70,32 @@ body{
     align-items:center;
 }
 
+.inbox-btn{
+    position:relative;
+    cursor:pointer;
+    font-size:22px;
+    line-height:1;
+    padding:4px;
+    user-select:none;
+}
+
+.inbox-badge{
+    position:absolute;
+    top:-4px;
+    right:-4px;
+    background:#FF3B30;
+    color:white;
+    font-size:10px;
+    font-weight:800;
+    min-width:16px;
+    height:16px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 4px;
+}
+
 .coin-display{
     display:flex;
     align-items:center;
@@ -1025,6 +1051,10 @@ body{
             </svg>
         </div>
         <div class="user-status">
+            <div class="inbox-btn" onclick="openInbox()" title="Inbox">
+                🔔
+                <span class="inbox-badge" id="inboxBadge" style="display:none;">0</span>
+            </div>
             <div class="coin-display">
                 💰 <strong id="coinDisplay">0</strong> Coins
             </div>
@@ -1166,12 +1196,28 @@ body{
                         <div class="hydration-progress">
                             <div class="hydration-progress-bar" id="hydrationBar" style="width:0%"></div>
                         </div>
-                        <button class="upload-btn" style="margin-top:12px;font-size:15px;" onclick="submitHydration500()">💧 500ml — Submit Validasi</button>
+                        <input type="text" id="referralCodeInput" class="upload-input" placeholder="Masukkan referral code AoC..." style="margin-top:12px;text-transform:uppercase;">
+                        <button class="upload-btn" style="margin-top:8px;font-size:15px;" onclick="submitHydration500()">💧 500ml — Submit Validasi (+25)</button>
+                        <div style="font-size:11px;opacity:.6;margin-top:8px;text-align:center;">Butuh referral code dari AoC untuk validasi hidrasi</div>
                         <div id="hydrationTokenBox" style="display:none;margin-top:12px;padding:14px;border:1px dashed var(--yellow);border-radius:8px;text-align:center;">
                             <div style="font-size:11px;opacity:.7;margin-bottom:6px;">🎟️ TOKEN VALIDASI HIDRASI ANDA</div>
                             <div id="hydrationTokenValue" style="font-size:18px;font-weight:800;letter-spacing:2px;color:var(--yellow);"></div>
                             <button class="upload-btn" style="margin-top:10px;padding:6px 14px;font-size:12px;" onclick="copyHydrationToken()">📋 Salin Token</button>
                         </div>
+                    </div>
+
+                    <!-- AoC: Referral Code section (muncul jika level AOC) -->
+                    <div class="profile-section" id="aocReferralSection" style="display:none;">
+                        <div class="profile-section-title">🎟️ Referral Codes (AoC)</div>
+                        <div id="myReferralCodes"></div>
+                        <button class="upload-btn" onclick="requestReferralCode()" style="margin-top:8px;">➕ Request Referral Code Baru</button>
+                    </div>
+
+                    <!-- Admin: Approval panel (muncul jika level ADMIN) -->
+                    <div class="profile-section" id="adminSection" style="display:none;">
+                        <div class="profile-section-title">🛡️ Admin — Approval Referral</div>
+                        <div id="pendingReferrals"></div>
+                        <button class="upload-btn" onclick="loadPendingReferrals()" style="margin-top:8px;background:transparent;border:1px solid rgba(239,251,0,.4);">🔄 Refresh Pending</button>
                     </div>
 
                     <div class="profile-section">
@@ -1322,8 +1368,10 @@ function loadApp() {
     loadFeed();
     loadFriends();
     loadGroups();
+    loadInboxBadge();
     startHeroImageRotation();
     setInterval(refresh, 90000);
+    setInterval(loadInboxBadge, 60000);
 }
 
 function startHeroImageRotation() {
@@ -1469,9 +1517,12 @@ function loadProfile() {
     apiCall('getMyProfile').then(data => {
         if (data.success) {
             const p = data.profile;
-            const isAOC = (p.level || '').toUpperCase() === 'AOC';
+            const lvl = (p.level || '').toUpperCase();
+            const isAOC = lvl === 'AOC';
+            const isAdmin = lvl === 'ADMIN';
+            const levelLabel = isAOC ? 'AGENTOFCHANGE' : isAdmin ? 'ADMIN' : p.level.toUpperCase();
             document.getElementById('coinDisplay').textContent = Math.round(p.coins || 0);
-            document.getElementById('levelDisplay').textContent = isAOC ? 'AGENTOFCHANGE' : p.level.toUpperCase();
+            document.getElementById('levelDisplay').textContent = levelLabel;
             document.getElementById('profileName').textContent = p.name;
             document.getElementById('profileLevel').textContent = isAOC ? 'AGENTOFCHANGE' : p.level;
             document.getElementById('profileCoins').textContent = Math.round(p.coins || 0);
@@ -1479,6 +1530,18 @@ function loadProfile() {
             document.getElementById('hydrationMonth').textContent = Math.round((p.totalHydration_L || 0) * 10) / 10 + 'L';
             document.getElementById('levelDisplay').classList.toggle('aoc', isAOC);
             if (p.hydrationToken) showHydrationToken(p.hydrationToken);
+
+            // Section AoC & Admin muncul sesuai level
+            const aocSec = document.getElementById('aocReferralSection');
+            const adminSec = document.getElementById('adminSection');
+            if (aocSec) {
+                aocSec.style.display = isAOC ? 'block' : 'none';
+                if (isAOC) loadMyReferralCodes();
+            }
+            if (adminSec) {
+                adminSec.style.display = isAdmin ? 'block' : 'none';
+                if (isAdmin) loadPendingReferrals();
+            }
 
             const avatarEl = document.getElementById('profileAvatar');
             if (p.avatarBase64) {
@@ -1877,31 +1940,23 @@ function addFriendById() {
     });
 }
 
-function addHydration(mlOverride) {
-    const ml = mlOverride;
-    if (!ml || ml <= 0) return;
+// Submit 500ml — wajib pakai referral code AoC
+function submitHydration500() {
+    const input = document.getElementById('referralCodeInput');
+    const code = input.value.trim().toUpperCase();
+    if (!code) return alert('Masukkan referral code dari AoC dulu untuk validasi!');
 
-    apiCall('updateHydration', { hydration_ml: ml }).then(data => {
+    apiCall('submitHydrationCode', { referralCode: code }).then(data => {
         if (data.success) {
-            if (data.hydrationToken) {
-                showHydrationToken(data.hydrationToken);
-                if (data.newToken) {
-                    alert('🎉 Selamat! Token validasi hidrasi Anda: ' + data.hydrationToken + '\n\nToken ini permanen, hanya 1 per profil. Tersimpan di bagian Hydration Goal.');
-                }
-            }
-            if (data.dailyGoalReached) {
-                alert('🏆 Daily goal 1L tercapai! +' + data.coinsBonus + ' coins');
-            }
+            input.value = '';
+            if (data.hydrationToken) showHydrationToken(data.hydrationToken);
+            alert('💧 ' + data.message + '\nTotal hidrasi: ' + data.totalHydration + 'L\n\nCek Inbox 🔔 untuk bukti hidrasi.');
             loadProfile();
+            loadInboxBadge();
         } else {
-            alert(data.message || 'Gagal update hidrasi');
+            alert('❌ ' + (data.message || 'Gagal validasi'));
         }
     });
-}
-
-// Quick submit 500ml untuk validasi hidrasi
-function submitHydration500() {
-    addHydration(500);
 }
 
 function showHydrationToken(token) {
@@ -1918,6 +1973,140 @@ function copyHydrationToken() {
     if (!val) return;
     navigator.clipboard.writeText(val).then(() => alert('Token disalin: ' + val))
         .catch(() => prompt('Salin token ini:', val));
+}
+
+// ═══════════════ REFERRAL CODE (AoC) ═══════════════
+function requestReferralCode() {
+    apiCall('requestReferralCode').then(data => {
+        alert(data.success ? '✅ ' + data.message : '❌ ' + data.message);
+        if (data.success) loadMyReferralCodes();
+    });
+}
+
+function loadMyReferralCodes() {
+    apiCall('getMyReferralCodes').then(data => {
+        const box = document.getElementById('myReferralCodes');
+        if (!box) return;
+        const codes = data.codes || [];
+        if (codes.length === 0) {
+            box.innerHTML = '<div style="font-size:12px;opacity:.6;padding:8px 0;">Belum ada kode. Request untuk mulai.</div>';
+            return;
+        }
+        box.innerHTML = codes.map(c => {
+            const badge = {
+                pending:  '<span style="color:#FFB020;">⏳ Menunggu Approval</span>',
+                active:   '<span style="color:#34C759;">🟢 Aktif</span>',
+                rejected: '<span style="color:#FF3B30;">❌ Ditolak</span>',
+                expired:  '<span style="color:#8E8E93;">⌛ Expired</span>'
+            }[c.status] || c.status;
+            const exp = c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('id-ID') : '';
+            return `
+            <div style="background:rgba(255,255,255,.05);padding:12px;border-radius:8px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                    <div style="font-size:18px;font-weight:800;letter-spacing:2px;color:var(--yellow);">${c.code}</div>
+                    ${c.status === 'active' ? `<button class="post-action-btn" style="flex:none;padding:4px 10px;" onclick="copyText('${c.code}')">📋 Salin</button>` : ''}
+                </div>
+                <div style="font-size:11px;margin-top:6px;">${badge}
+                    ${c.status === 'active' ? ` · exp ${exp} · dipakai ${c.usedCount}x` : ''}
+                    ${c.status === 'rejected' && c.note ? ` · ${c.note}` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    });
+}
+
+function copyText(t) {
+    navigator.clipboard.writeText(t).then(() => alert('Disalin: ' + t)).catch(() => prompt('Salin:', t));
+}
+
+// ═══════════════ ADMIN — Approval ═══════════════
+function loadPendingReferrals() {
+    apiCall('getPendingReferrals').then(data => {
+        const box = document.getElementById('pendingReferrals');
+        if (!box) return;
+        if (!data.success) { box.innerHTML = '<div style="font-size:12px;opacity:.6;">' + data.message + '</div>'; return; }
+        const pending = data.pending || [];
+        if (pending.length === 0) {
+            box.innerHTML = '<div style="font-size:12px;opacity:.6;padding:8px 0;">Tidak ada request pending. ✨</div>';
+            return;
+        }
+        box.innerHTML = pending.map(p => `
+            <div style="background:rgba(255,255,255,.05);padding:12px;border-radius:8px;margin-bottom:10px;">
+                <div style="font-weight:700;">${p.ownerName}</div>
+                <div style="font-size:16px;font-weight:800;letter-spacing:2px;color:var(--yellow);margin:4px 0;">${p.code}</div>
+                <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
+                    <select id="dur_${p.code}" class="upload-input" style="margin:0;padding:8px;flex:1;">
+                        <option value="7">7 hari</option>
+                        <option value="14">14 hari</option>
+                        <option value="30">30 hari</option>
+                        <option value="90">90 hari</option>
+                    </select>
+                    <button class="upload-btn" style="margin:0;flex:none;padding:8px 14px;" onclick="approveReferral('${p.code}')">✅ Approve</button>
+                    <button class="post-action-btn" style="flex:none;padding:8px 12px;" onclick="rejectReferral('${p.code}')">❌</button>
+                </div>
+            </div>`).join('');
+    });
+}
+
+function approveReferral(code) {
+    const days = document.getElementById('dur_' + code).value;
+    apiCall('approveReferralCode', { code, durationDays: days }).then(data => {
+        alert(data.success ? '✅ ' + data.message : '❌ ' + data.message);
+        if (data.success) loadPendingReferrals();
+    });
+}
+
+function rejectReferral(code) {
+    const note = prompt('Alasan reject (opsional):') || '';
+    apiCall('rejectReferralCode', { code, note }).then(data => {
+        alert(data.success ? 'Ditolak.' : '❌ ' + data.message);
+        if (data.success) loadPendingReferrals();
+    });
+}
+
+// ═══════════════ INBOX ═══════════════
+function loadInboxBadge() {
+    apiCall('getInbox').then(data => {
+        if (!data.success) return;
+        const badge = document.getElementById('inboxBadge');
+        if (data.unread > 0) {
+            badge.textContent = data.unread > 9 ? '9+' : data.unread;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    });
+}
+
+function openInbox() {
+    apiCall('getInbox').then(data => {
+        const items = data.inbox || [];
+        const icon = { referral_approved:'✅', referral_rejected:'❌', referral_expired:'⌛',
+                       hydration_receipt:'💧', referral_used:'🎉' };
+        const body = items.length === 0
+            ? '<div style="text-align:center;opacity:.6;padding:30px;">Inbox kosong 📭</div>'
+            : items.map(it => `
+                <div style="background:${it.read ? 'rgba(255,255,255,.04)' : 'rgba(239,251,0,.08)'};padding:14px;border-radius:10px;margin-bottom:10px;border-left:3px solid ${it.read ? 'transparent' : 'var(--yellow)'};">
+                    <div style="font-weight:700;font-size:14px;">${icon[it.type] || '📩'} ${it.title}</div>
+                    <div style="font-size:13px;opacity:.85;margin-top:4px;">${it.message}</div>
+                    <div style="font-size:10px;opacity:.5;margin-top:6px;">${new Date(it.createdAt).toLocaleString('id-ID')}</div>
+                </div>`).join('');
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px;';
+        modal.innerHTML = `
+            <div style="background:#1a1a1a;padding:20px;border-radius:14px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <div style="font-size:18px;font-weight:800;">🔔 Inbox</div>
+                    <button class="post-action-btn" style="flex:none;padding:4px 12px;" onclick="this.closest('[style*=fixed]').remove()">✕</button>
+                </div>
+                ${body}
+            </div>`;
+        document.body.appendChild(modal);
+
+        // Tandai semua sudah dibaca
+        apiCall('markInboxRead').then(() => loadInboxBadge());
+    });
 }
 
 // ─── CHAT (persisten di Sheets, friend & group) ─────────────
