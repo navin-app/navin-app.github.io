@@ -1254,7 +1254,7 @@ body{
                 <span class="inbox-badge" id="inboxBadge" style="display:none;">0</span>
             </div>
             <div class="coin-display">
-                💰 <strong id="coinDisplay">0</strong> Coins
+                💰 <strong id="coinDisplay">0</strong> Poin
             </div>
             <div class="user-level" id="levelDisplay">Movers</div>
         </div>
@@ -1286,7 +1286,7 @@ body{
                 <div class="hero-banner" id="heroBanner">
                     <div class="hero-content">
                         <div class="hero-title">Hydration Impact</div>
-                        <div class="hero-subtitle">📸 Share Your NAVIN Moment & Earn Coins</div>
+                        <div class="hero-subtitle">📸 Share Your NAVIN Moment & Earn Poin</div>
                     </div>
                     <div class="hero-stats">
                         <div class="hero-stat">
@@ -1395,7 +1395,7 @@ body{
                         <div class="profile-stats">
                             <div class="profile-stat">
                                 <div class="profile-stat-number" id="profileCoins">0</div>
-                                <div class="profile-stat-label">Coins</div>
+                                <div class="profile-stat-label">Poin</div>
                             </div>
                             <div class="profile-stat">
                                 <div class="profile-stat-number" id="profileHydration">0</div>
@@ -1703,7 +1703,7 @@ function mockApiCall(action, data = {}) {
         db.users = db.users.map(u => u.userId === currentUser.userId ? { ...u, coins: user.coins } : u);
         localStorage.setItem('navin_posts', JSON.stringify(db.posts));
         localStorage.setItem('navin_users', JSON.stringify(db.users));
-        return { success: true, message: 'Post berhasil dibuat! +20 coins', postId: post.postId };
+        return { success: true, message: 'Post berhasil dibuat! +20 poin', postId: post.postId };
     }
 
     if (action === 'getFeed') {
@@ -1722,7 +1722,7 @@ function mockApiCall(action, data = {}) {
             localStorage.setItem('navin_posts', JSON.stringify(db.posts));
             localStorage.setItem('navin_users', JSON.stringify(db.users));
         }
-        return { success: true, message: 'Post dilike! +1 coin untuk author' };
+        return { success: true, message: 'Post dilike! +1 poin' };
     }
 
     if (action === 'getMyFriends') {
@@ -1944,7 +1944,7 @@ function loadFeed() {
                         <div class="post-text">${post.caption || ''}</div>
                         <div class="post-stats">
                             <div class="post-stat-item">👍 <strong>${post.likes_count || 0}</strong> Likes</div>
-                            <div class="post-stat-item coin-badge">+${post.coins_earned || 20} Coins</div>
+                            <div class="post-stat-item coin-badge">+${post.coins_earned || 20} Poin</div>
                         </div>
                         <div class="post-actions">
                             ${(post.likedBy || '').split(',').indexOf(currentUser.userId) !== -1

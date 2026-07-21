@@ -441,11 +441,11 @@ function handleUploadPost(body) {
     }
   }
 
-  let msg = 'Post berhasil dibuat! +' + POST_BASE + ' coins';
+  let msg = 'Post berhasil dibuat! +' + POST_BASE + ' poin';
   if (movePoints > 0) {
-    msg += ' + ' + movePoints + ' Quest Points (' + Math.floor(durSec / 60) + ' menit ' + (activity || 'aktivitas') + ')';
+    msg += ' + ' + movePoints + ' Quest Poin (' + Math.floor(durSec / 60) + ' menit ' + (activity || 'aktivitas') + ')';
   } else if (durSec > 0 && durSec < 300) {
-    msg += ' (aktivitas < 5 menit belum dapat Quest Point)';
+    msg += ' (aktivitas < 5 menit belum dapat Quest Poin)';
   }
 
   return { success: true, message: msg, postId, movePoints, coinsEarned: totalEarned };
