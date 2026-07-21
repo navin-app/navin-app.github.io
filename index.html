@@ -1463,6 +1463,12 @@ body{
                         <div id="myPostsList"></div>
                     </div>
 
+                    <div class="profile-section">
+                        <div class="profile-section-title">🔒 Ganti Password</div>
+                        <input type="password" id="changePassInput" class="upload-input" placeholder="Password baru (min 4 karakter)">
+                        <button class="upload-btn" onclick="changePassword()" style="margin-top:8px;">🔒 Update Password</button>
+                    </div>
+
                     <button class="logout-btn" onclick="logout()">🚪 Logout</button>
                 </div>
             </div>
@@ -1515,10 +1521,47 @@ function showAuthUI() {
                     <div class="auth-toggle">
                         Don't have account? <a onclick="toggleAuthMode()">Sign Up</a>
                     </div>
+                    <div class="auth-toggle" style="margin-top:8px;">
+                        <a onclick="showForgotForm()">Lupa password?</a>
+                    </div>
                 </div>
             </div>
         </div>
     `;
+}
+
+function showForgotForm() {
+    const form = document.getElementById('authForm');
+    form.innerHTML = `
+        <h3 style="margin-bottom:8px;">Reset Password</h3>
+        <p style="font-size:12px;opacity:.6;margin-bottom:16px;">Masukkan email & nama terdaftar untuk membuat password baru.</p>
+        <input type="email" id="fpEmail" class="auth-input" placeholder="Email terdaftar" required>
+        <input type="text" id="fpName" class="auth-input" placeholder="Nama lengkap terdaftar" required>
+        <input type="password" id="fpNewPass" class="auth-input" placeholder="Password baru (min 4 karakter)" required>
+        <button class="auth-btn" onclick="doForgotPassword()">Reset Password</button>
+        <div class="auth-toggle" style="margin-top:12px;">
+            <a onclick="showAuthUI()">← Kembali ke Login</a>
+        </div>
+    `;
+}
+
+function doForgotPassword() {
+    const email = document.getElementById('fpEmail').value.trim();
+    const name = document.getElementById('fpName').value.trim();
+    const newPassword = document.getElementById('fpNewPass').value;
+    if (!email || !name || !newPassword) return alert('Isi semua field!');
+
+    fetch(API_BASE + '?payload=' + encodeURIComponent(JSON.stringify({ action: 'forgotPassword', email, name, newPassword })), {
+        method: 'GET', redirect: 'follow'
+    }).then(r => r.text()).then(text => {
+        try {
+            const data = JSON.parse(text);
+            alert((data.success ? '✅ ' : '❌ ') + data.message);
+            if (data.success) showAuthUI();
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
+    }).catch(err => alert('Network error: ' + err.message));
 }
 
 function toggleAuthMode() {
@@ -1750,6 +1793,7 @@ function loadProfile() {
     apiCall('getMyProfile').then(data => {
         if (data.success) {
             const p = data.profile;
+            if (currentUser) { currentUser.email = p.email; currentUser.name = p.name; }
             const lvl = (p.level || '').toUpperCase();
             const isAOC = lvl === 'AOC';
             const isAdmin = lvl === 'ADMIN';
@@ -2111,6 +2155,18 @@ function likePost(postId) {
         if (!data.success && !data.alreadyLiked) alert(data.message);
         loadFeed();
         loadProfile();
+    });
+}
+
+function changePassword() {
+    const newPassword = document.getElementById('changePassInput').value;
+    if (!newPassword || newPassword.length < 4) return alert('Password baru minimal 4 karakter!');
+    if (!currentUser || !currentUser.email) return alert('Profil belum termuat, coba refresh.');
+    if (!confirm('Ganti password sekarang?')) return;
+
+    apiCall('forgotPassword', { email: currentUser.email, name: currentUser.name, newPassword }).then(data => {
+        alert((data.success ? '✅ ' : '❌ ') + data.message);
+        if (data.success) document.getElementById('changePassInput').value = '';
     });
 }
 

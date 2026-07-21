@@ -146,6 +146,7 @@ function processRequest(payload) {
   else if (action === 'submitHydrationCode') result = handleSubmitHydrationCode(payload);
   else if (action === 'getInbox')       result = handleGetInbox(payload);
   else if (action === 'markInboxRead')  result = handleMarkInboxRead(payload);
+  else if (action === 'forgotPassword') result = handleForgotPassword(payload);
   else if (action === 'getAds')         result = handleGetAds(payload);
   else if (action === 'uploadAd')       result = handleUploadAd(payload);
   else if (action === 'deleteAd')       result = handleDeleteAd(payload);
@@ -259,6 +260,33 @@ function handleLogin(body) {
   }
 
   return { success: false, message: 'Email atau password salah.' };
+}
+
+// ── Forgot Password (email + nama cocok → set password baru) ──
+function handleForgotPassword(body) {
+  const { email, name, newPassword } = body;
+  if (!email || !name || !newPassword)
+    return { success: false, message: 'Email, nama, dan password baru wajib diisi.' };
+  if (newPassword.length < 4)
+    return { success: false, message: 'Password baru minimal 4 karakter.' };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SHEET_USERS);
+  if (!sheet) return { success: false, message: 'Belum ada user.' };
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (row[1] && row[1].toString().toLowerCase() === email.toLowerCase()) {
+      // Verifikasi nama terdaftar cocok (case-insensitive, trim)
+      if ((row[3] || '').toString().trim().toLowerCase() !== name.trim().toLowerCase()) {
+        return { success: false, message: 'Nama tidak cocok dengan email terdaftar.' };
+      }
+      sheet.getRange(i + 1, 3).setValue(hashPassword(newPassword));
+      return { success: true, message: 'Password berhasil diubah! Silakan login dengan password baru.' };
+    }
+  }
+  return { success: false, message: 'Email tidak terdaftar.' };
 }
 
 // ── Get My Profile ────────────────────────────────────────
