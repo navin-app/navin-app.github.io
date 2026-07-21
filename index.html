@@ -537,6 +537,13 @@ body{
     border-color:rgba(239,251,0,.6);
 }
 
+.post-action-btn.liked{
+    background:rgba(197,248,42,.15);
+    border-color:#C5F82A;
+    color:#C5F82A;
+    cursor:default;
+}
+
 .coin-badge{
     display:inline-block;
     background:rgba(239,251,0,.2);
@@ -1896,7 +1903,9 @@ function loadFeed() {
                             <div class="post-stat-item coin-badge">+${post.coins_earned || 20} Coins</div>
                         </div>
                         <div class="post-actions">
-                            <button class="post-action-btn" onclick="likePost('${post.postId}')">👍 Like</button>
+                            ${(post.likedBy || '').split(',').indexOf(currentUser.userId) !== -1
+                                ? `<button class="post-action-btn liked" disabled>💚 Liked</button>`
+                                : `<button class="post-action-btn" onclick="likePost('${post.postId}')">👍 Like +1</button>`}
                             ${post.userId === currentUser.userId ? `<button class="post-action-btn" onclick="deletePost('${post.postId}')">🗑️ Delete</button>` : ''}
                         </div>
                     </div>
@@ -2098,7 +2107,8 @@ async function uploadPost() {
 }
 
 function likePost(postId) {
-    apiCall('likePost', { postId }).then(() => {
+    apiCall('likePost', { postId }).then(data => {
+        if (!data.success && !data.alreadyLiked) alert(data.message);
         loadFeed();
         loadProfile();
     });

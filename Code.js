@@ -456,24 +456,30 @@ function handleLikePost(body) {
 
   for (let i = 1; i < postsData.length; i++) {
     if (postsData[i][0] === postId) {
-      const likes = (postsData[i][8] || 0) + 1;
-      const likedBy = (postsData[i][9] || '').length > 0 ? postsData[i][9] + ',' + userId : userId;
+      // Cek: user sudah pernah like? Tidak boleh double (tidak ada unlike)
+      const likedByStr = (postsData[i][9] || '').toString();
+      const likedByArr = likedByStr.length > 0 ? likedByStr.split(',') : [];
+      if (likedByArr.indexOf(userId) !== -1) {
+        return { success: false, message: 'Kamu sudah like post ini.', alreadyLiked: true };
+      }
 
+      const likes = (postsData[i][8] || 0) + 1;
+      const likedBy = likedByArr.concat(userId).join(',');
       postsSheet.getRange(i + 1, 9).setValue(likes);
       postsSheet.getRange(i + 1, 10).setValue(likedBy);
 
-      const creatorId = postsData[i][1];
+      // +1 poin untuk yang MELAKUKAN like (bukan author)
       const usersSheet = ss.getSheetByName(SHEET_USERS);
       const usersData = usersSheet.getDataRange().getValues();
       for (let j = 1; j < usersData.length; j++) {
-        if (usersData[j][0] === creatorId) {
+        if (usersData[j][0] === userId) {
           const currentCoins = usersData[j][7] || 0;
           usersSheet.getRange(j + 1, 8).setValue(currentCoins + 1);
           break;
         }
       }
 
-      return { success: true, message: 'Post dilike! +1 coin untuk author' };
+      return { success: true, message: 'Post dilike! +1 poin', likes };
     }
   }
 
