@@ -13,6 +13,7 @@ const SHEET_CHATS     = 'Chats';
 const SHEET_REFERRALS = 'ReferralCodes';
 const SHEET_REF_USAGE = 'ReferralUsage';
 const SHEET_INBOX     = 'Inbox';
+const SHEET_ADS       = 'Ads';
 
 // Poin
 const PTS_HYDRATION_SUBMIT = 25;  // Mover/AoC submit 500ml dengan kode valid
@@ -98,6 +99,13 @@ function ensureSheetsExist() {
     inbox.appendRow(['inboxId','userId','type','title','message','read','createdAt']);
     inbox.getRange(1,1,1,7).setFontWeight('bold');
   }
+
+  let ads = ss.getSheetByName(SHEET_ADS);
+  if (!ads) {
+    ads = ss.insertSheet(SHEET_ADS);
+    ads.appendRow(['adId','imageBase64','title','linkUrl','uploadedBy','createdAt']);
+    ads.getRange(1,1,1,6).setFontWeight('bold');
+  }
   } catch (err) {
     Logger.log('Sheet initialization error: ' + err.message);
   }
@@ -138,6 +146,9 @@ function processRequest(payload) {
   else if (action === 'submitHydrationCode') result = handleSubmitHydrationCode(payload);
   else if (action === 'getInbox')       result = handleGetInbox(payload);
   else if (action === 'markInboxRead')  result = handleMarkInboxRead(payload);
+  else if (action === 'getAds')         result = handleGetAds(payload);
+  else if (action === 'uploadAd')       result = handleUploadAd(payload);
+  else if (action === 'deleteAd')       result = handleDeleteAd(payload);
   else                                  result = { success: false, message: 'Unknown action: ' + action };
 
   return result;
@@ -670,11 +681,15 @@ function handleGetGroups(body) {
   const groupsData = groupsSheet.getDataRange().getValues();
   const groups = [];
   for (let i = 1; i < groupsData.length; i++) {
+    const creatorId = groupsData[i][1];
+    const members = (groupsData[i][3] || '').split(',').filter(m => m.length > 0);
+    // Hanya tampilkan group jika user adalah creator ATAU member
+    if (creatorId !== userId && !members.includes(userId)) continue;
     groups.push({
       groupId: groupsData[i][0],
-      creatorId: groupsData[i][1],
+      creatorId: creatorId,
       name: groupsData[i][2],
-      members: (groupsData[i][3] || '').split(','),
+      members: members,
       createdAt: groupsData[i][4]
     });
   }
@@ -959,7 +974,7 @@ function handleGetPendingReferrals(body) {
 
 // ── Admin: Approve Referral Code ───────────────────────────
 function handleApproveReferralCode(body) {
-  const { token, userId, code, durationDays } = body;
+  const { token, userId, code, durationHours } = body;
   if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -968,21 +983,24 @@ function handleApproveReferralCode(body) {
     return { success: false, message: 'Hanya Admin.' };
   }
 
-  const days = parseInt(durationDays) || 7;
+  // Hanya 2, 4, atau 24 jam
+  let hours = parseInt(durationHours) || 24;
+  if ([2, 4, 24].indexOf(hours) === -1) hours = 24;
+
   const refSheet = ss.getSheetByName(SHEET_REFERRALS);
   const refData = refSheet.getDataRange().getValues();
   const target = (code || '').toString().toUpperCase();
   for (let i = 1; i < refData.length; i++) {
     if ((refData[i][0] || '').toString().toUpperCase() === target) {
       const now = new Date();
-      const exp = new Date(now.getTime() + days * 24 * 3600 * 1000);
+      const exp = new Date(now.getTime() + hours * 3600 * 1000);
       refSheet.getRange(i + 1, 4).setValue('active');
-      refSheet.getRange(i + 1, 5).setValue(days);
+      refSheet.getRange(i + 1, 5).setValue(hours + ' jam');
       refSheet.getRange(i + 1, 7).setValue(now.toISOString());
       refSheet.getRange(i + 1, 8).setValue(exp.toISOString());
       addInbox(refData[i][1], 'referral_approved', '✅ Referral Code Disetujui',
-        'Kode ' + refData[i][0] + ' aktif ' + days + ' hari (s/d ' + exp.toLocaleDateString('id-ID') + '). Bagikan ke Movers!');
-      return { success: true, message: 'Approved! Kode aktif ' + days + ' hari.' };
+        'Kode ' + refData[i][0] + ' aktif ' + hours + ' jam (s/d ' + exp.toLocaleString('id-ID') + '). Bagikan ke Movers!');
+      return { success: true, message: 'Approved! Kode aktif ' + hours + ' jam.' };
     }
   }
   return { success: false, message: 'Kode tidak ditemukan.' };
@@ -1144,6 +1162,79 @@ function handleMarkInboxRead(body) {
     }
   }
   return { success: true };
+}
+
+// ============================================================
+//  ADS / IKLAN BANNER (Home) — admin managed
+// ============================================================
+
+// ── Get Ads (semua user login) ─────────────────────────────
+function handleGetAds(body) {
+  const { token, userId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const adsSheet = ss.getSheetByName(SHEET_ADS);
+  if (!adsSheet) return { success: true, ads: [] };
+  const data = adsSheet.getDataRange().getValues();
+  const ads = [];
+  for (let i = 1; i < data.length; i++) {
+    ads.push({
+      adId: data[i][0],
+      imageBase64: data[i][1] || '',
+      title: data[i][2] || '',
+      linkUrl: data[i][3] || '',
+      createdAt: data[i][5]
+    });
+  }
+  return { success: true, ads };
+}
+
+// ── Upload Ad (Admin only, chunked image) ──────────────────
+function handleUploadAd(body) {
+  const { token, userId, title, linkUrl, imageBase64, imageUploadId, imageChunks } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const usersData = ss.getSheetByName(SHEET_USERS).getDataRange().getValues();
+  if (getUserLevel(usersData, userId).toUpperCase() !== 'ADMIN') {
+    return { success: false, message: 'Hanya Admin yang bisa upload iklan.' };
+  }
+
+  let image = imageBase64 || '';
+  if (imageUploadId && imageChunks) {
+    const assembled = assembleChunks(imageUploadId, imageChunks);
+    if (assembled === null) return { success: false, message: 'Upload gambar tidak lengkap, coba lagi.' };
+    image = assembled;
+  }
+  if (!image) return { success: false, message: 'Gambar iklan wajib diisi.' };
+
+  const adsSheet = ss.getSheetByName(SHEET_ADS);
+  const adId = 'AD_' + new Date().getTime();
+  adsSheet.appendRow([adId, image.substring(0, 45000), title || '', linkUrl || '', userId, new Date().toISOString()]);
+  return { success: true, message: 'Iklan ditambahkan!', adId };
+}
+
+// ── Delete Ad (Admin only) ─────────────────────────────────
+function handleDeleteAd(body) {
+  const { token, userId, adId } = body;
+  if (!verifyToken(token, userId)) return { success: false, message: 'Token tidak valid.' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const usersData = ss.getSheetByName(SHEET_USERS).getDataRange().getValues();
+  if (getUserLevel(usersData, userId).toUpperCase() !== 'ADMIN') {
+    return { success: false, message: 'Hanya Admin.' };
+  }
+
+  const adsSheet = ss.getSheetByName(SHEET_ADS);
+  const data = adsSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === adId) {
+      adsSheet.deleteRow(i + 1);
+      return { success: true, message: 'Iklan dihapus.' };
+    }
+  }
+  return { success: false, message: 'Iklan tidak ditemukan.' };
 }
 
 // ── Helpers ───────────────────────────────────────────────

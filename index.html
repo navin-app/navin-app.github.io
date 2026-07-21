@@ -187,6 +187,61 @@ body{
     to{ opacity:1; }
 }
 
+.ad-carousel{
+    position:relative;
+    width:100%;
+    border-radius:20px;
+    overflow:hidden;
+    margin-bottom:20px;
+    background:var(--light-gray);
+    aspect-ratio:16/6;
+}
+
+.ad-image{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    cursor:pointer;
+    display:block;
+}
+
+.ad-dots{
+    position:absolute;
+    bottom:10px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:6px;
+}
+
+.ad-dots span{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:rgba(255,255,255,.5);
+    transition:all .2s;
+}
+
+.ad-dots span.active{
+    background:var(--yellow);
+    width:18px;
+    border-radius:4px;
+}
+
+.ad-label{
+    position:absolute;
+    top:10px;
+    right:10px;
+    background:rgba(0,0,0,.6);
+    color:rgba(255,255,255,.8);
+    font-size:9px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:6px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+}
+
 .hero-banner{
     width:100%;
     height:280px;
@@ -890,15 +945,52 @@ body{
     display:inline-flex;
     align-items:center;
     gap:6px;
-    background:rgba(239,251,0,.12);
-    border:1px solid rgba(239,251,0,.35);
-    color:var(--yellow);
-    padding:4px 12px;
+    background:rgba(197,248,42,.15);
+    border:1px solid rgba(197,248,42,.4);
+    color:#C5F82A;
+    padding:5px 13px;
     border-radius:14px;
     font-size:12px;
     font-weight:700;
     margin-right:8px;
     margin-bottom:8px;
+}
+
+/* Move report card — Gen-Z aesthetic */
+.move-report{
+    display:flex;
+    gap:8px;
+    margin-bottom:12px;
+    padding:16px;
+    background:linear-gradient(135deg, #C5F82A 0%, #A8E020 100%);
+    border-radius:18px;
+}
+
+.move-report-item{
+    flex:1;
+    text-align:center;
+}
+
+.move-report-label{
+    font-size:9px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    color:rgba(0,0,0,.55);
+    margin-bottom:4px;
+}
+
+.move-report-value{
+    font-size:22px;
+    font-weight:900;
+    color:#0a0a0a;
+    line-height:1;
+    letter-spacing:-.5px;
+}
+
+.move-report-value span{
+    font-size:12px;
+    font-weight:700;
+    margin-left:2px;
 }
 
 .upload-btn{
@@ -1078,6 +1170,13 @@ body{
 
             <!-- HOME TAB -->
             <div id="home" class="tab-content active">
+                <!-- IKLAN / AD BANNER (berganti otomatis) -->
+                <div class="ad-carousel" id="adCarousel" style="display:none;">
+                    <img id="adImage" class="ad-image" src="" alt="Ad" onclick="openAdLink()">
+                    <div class="ad-dots" id="adDots"></div>
+                    <div class="ad-label">Ad</div>
+                </div>
+
                 <div class="hero-banner" id="heroBanner">
                     <div class="hero-content">
                         <div class="hero-title">Hydration Impact</div>
@@ -1218,6 +1317,16 @@ body{
                         <div class="profile-section-title">🛡️ Admin — Approval Referral</div>
                         <div id="pendingReferrals"></div>
                         <button class="upload-btn" onclick="loadPendingReferrals()" style="margin-top:8px;background:transparent;border:1px solid rgba(239,251,0,.4);">🔄 Refresh Pending</button>
+                    </div>
+
+                    <!-- Admin: Kelola Iklan Home -->
+                    <div class="profile-section" id="adminAdsSection" style="display:none;">
+                        <div class="profile-section-title">📢 Admin — Iklan Home</div>
+                        <div id="adminAdsList"></div>
+                        <input type="file" id="adImageInput" accept="image/*" class="upload-input" style="margin-top:10px;">
+                        <input type="text" id="adTitleInput" class="upload-input" placeholder="Judul iklan (opsional)">
+                        <input type="text" id="adLinkInput" class="upload-input" placeholder="Link URL saat diklik (opsional)">
+                        <button class="upload-btn" id="uploadAdBtn" onclick="uploadAd()">📢 Upload Iklan Baru</button>
                     </div>
 
                     <div class="profile-section">
@@ -1369,6 +1478,7 @@ function loadApp() {
     loadFriends();
     loadGroups();
     loadInboxBadge();
+    loadAds();
     startHeroImageRotation();
     setInterval(refresh, 90000);
     setInterval(loadInboxBadge, 60000);
@@ -1542,6 +1652,11 @@ function loadProfile() {
                 adminSec.style.display = isAdmin ? 'block' : 'none';
                 if (isAdmin) loadPendingReferrals();
             }
+            const adminAdsSec = document.getElementById('adminAdsSection');
+            if (adminAdsSec) {
+                adminAdsSec.style.display = isAdmin ? 'block' : 'none';
+                if (isAdmin) loadAdminAds();
+            }
 
             const avatarEl = document.getElementById('profileAvatar');
             if (p.avatarBase64) {
@@ -1654,10 +1769,10 @@ function loadFeed() {
                             ${post.activity ? `<span class="post-move-badge">${post.activity === 'Run' ? '🏃' : post.activity === 'Walk' ? '🚶' : '🚴'} ${post.activity}</span>` : ''}
                             ${post.location ? `<span class="post-move-badge">📍 ${post.location}</span>` : ''}
                         </div>` : ''}
-                        ${post.distance_km ? `<div style="display:flex;gap:20px;margin-bottom:10px;padding:12px;background:rgba(2,102,255,.1);border-radius:10px;">
-                            <div><div style="font-size:10px;opacity:.6;">DISTANCE</div><div style="font-size:20px;font-weight:800;">${post.distance_km} km</div></div>
-                            ${post.duration_s ? `<div><div style="font-size:10px;opacity:.6;">TIME</div><div style="font-size:20px;font-weight:800;">${fmtDuration(post.duration_s)}</div></div>` : ''}
-                            ${post.duration_s && post.distance_km > 0 ? `<div><div style="font-size:10px;opacity:.6;">PACE</div><div style="font-size:20px;font-weight:800;">${(() => { const p = (post.duration_s/60)/post.distance_km; return Math.floor(p) + "'" + String(Math.round((p%1)*60)).padStart(2,'0') + '"'; })()}</div></div>` : ''}
+                        ${post.distance_km ? `<div class="move-report">
+                            <div class="move-report-item"><div class="move-report-label">DISTANCE</div><div class="move-report-value">${post.distance_km}<span>km</span></div></div>
+                            ${post.duration_s ? `<div class="move-report-item"><div class="move-report-label">TIME</div><div class="move-report-value">${fmtDuration(post.duration_s)}</div></div>` : ''}
+                            ${post.duration_s && post.distance_km > 0 ? `<div class="move-report-item"><div class="move-report-label">PACE</div><div class="move-report-value">${(() => { const p = (post.duration_s/60)/post.distance_km; return Math.floor(p) + "'" + String(Math.round((p%1)*60)).padStart(2,'0') + '"'; })()}</div></div>` : ''}
                         </div>` : ''}
                         <div class="post-text">${post.caption || ''}</div>
                         <div class="post-stats">
@@ -1999,7 +2114,7 @@ function loadMyReferralCodes() {
                 rejected: '<span style="color:#FF3B30;">❌ Ditolak</span>',
                 expired:  '<span style="color:#8E8E93;">⌛ Expired</span>'
             }[c.status] || c.status;
-            const exp = c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('id-ID') : '';
+            const exp = c.expiresAt ? new Date(c.expiresAt).toLocaleString('id-ID', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
             return `
             <div style="background:rgba(255,255,255,.05);padding:12px;border-radius:8px;margin-bottom:8px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -2036,10 +2151,9 @@ function loadPendingReferrals() {
                 <div style="font-size:16px;font-weight:800;letter-spacing:2px;color:var(--yellow);margin:4px 0;">${p.code}</div>
                 <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
                     <select id="dur_${p.code}" class="upload-input" style="margin:0;padding:8px;flex:1;">
-                        <option value="7">7 hari</option>
-                        <option value="14">14 hari</option>
-                        <option value="30">30 hari</option>
-                        <option value="90">90 hari</option>
+                        <option value="2">2 jam</option>
+                        <option value="4">4 jam</option>
+                        <option value="24" selected>24 jam</option>
                     </select>
                     <button class="upload-btn" style="margin:0;flex:none;padding:8px 14px;" onclick="approveReferral('${p.code}')">✅ Approve</button>
                     <button class="post-action-btn" style="flex:none;padding:8px 12px;" onclick="rejectReferral('${p.code}')">❌</button>
@@ -2049,8 +2163,8 @@ function loadPendingReferrals() {
 }
 
 function approveReferral(code) {
-    const days = document.getElementById('dur_' + code).value;
-    apiCall('approveReferralCode', { code, durationDays: days }).then(data => {
+    const hours = document.getElementById('dur_' + code).value;
+    apiCall('approveReferralCode', { code, durationHours: hours }).then(data => {
         alert(data.success ? '✅ ' + data.message : '❌ ' + data.message);
         if (data.success) loadPendingReferrals();
     });
@@ -2106,6 +2220,114 @@ function openInbox() {
 
         // Tandai semua sudah dibaca
         apiCall('markInboxRead').then(() => loadInboxBadge());
+    });
+}
+
+// ═══════════════ IKLAN / AD BANNER ═══════════════
+let adsData = [];
+let adIndex = 0;
+let adTimer = null;
+
+function loadAds() {
+    apiCall('getAds').then(data => {
+        adsData = (data.ads || []).filter(a => a.imageBase64);
+        const carousel = document.getElementById('adCarousel');
+        if (!carousel) return;
+        if (adsData.length === 0) { carousel.style.display = 'none'; return; }
+
+        carousel.style.display = 'block';
+        adIndex = 0;
+        renderAd();
+
+        const dots = document.getElementById('adDots');
+        dots.innerHTML = adsData.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('');
+
+        clearInterval(adTimer);
+        if (adsData.length > 1) {
+            adTimer = setInterval(() => {
+                adIndex = (adIndex + 1) % adsData.length;
+                renderAd();
+            }, 5000);
+        }
+    });
+}
+
+function renderAd() {
+    const img = document.getElementById('adImage');
+    if (!img || !adsData[adIndex]) return;
+    img.src = adsData[adIndex].imageBase64;
+    document.querySelectorAll('#adDots span').forEach((d, i) => d.classList.toggle('active', i === adIndex));
+}
+
+function openAdLink() {
+    const ad = adsData[adIndex];
+    if (ad && ad.linkUrl) window.open(ad.linkUrl, '_blank');
+}
+
+// ── Admin: Kelola Iklan ──
+function loadAdminAds() {
+    apiCall('getAds').then(data => {
+        const box = document.getElementById('adminAdsList');
+        if (!box) return;
+        const ads = data.ads || [];
+        if (ads.length === 0) {
+            box.innerHTML = '<div style="font-size:12px;opacity:.6;padding:8px 0;">Belum ada iklan.</div>';
+            return;
+        }
+        box.innerHTML = ads.map(a => `
+            <div style="display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.05);padding:8px;border-radius:8px;margin-bottom:8px;">
+                <img src="${a.imageBase64}" style="width:60px;height:36px;object-fit:cover;border-radius:6px;">
+                <div style="flex:1;font-size:12px;">${a.title || '(tanpa judul)'}</div>
+                <button class="post-action-btn" style="flex:none;padding:6px 10px;" onclick="deleteAd('${a.adId}')">🗑️</button>
+            </div>`).join('');
+    });
+}
+
+async function uploadAd() {
+    const fileInput = document.getElementById('adImageInput');
+    const title = document.getElementById('adTitleInput').value.trim();
+    const linkUrl = document.getElementById('adLinkInput').value.trim();
+    const btn = document.getElementById('uploadAdBtn');
+    if (!fileInput.files[0]) return alert('Pilih gambar iklan dulu!');
+
+    const original = btn.textContent;
+    btn.disabled = true; btn.textContent = '⏳ Memproses...';
+    try {
+        // 800px, quality 0.72 → HD tapi ringan
+        const dataUrl = await compressImage(fileInput.files[0], 800, 0.72);
+        let payload = { title, linkUrl };
+        if (dataUrl.length <= CHUNK_SIZE) {
+            payload.imageBase64 = dataUrl;
+        } else {
+            const { uploadId, total } = await uploadInChunks(dataUrl, (i, t) => {
+                btn.textContent = `📤 Upload ${i}/${t}...`;
+            });
+            payload.imageUploadId = uploadId;
+            payload.imageChunks = total;
+        }
+        const data = await apiCall('uploadAd', payload);
+        if (data.success) {
+            fileInput.value = '';
+            document.getElementById('adTitleInput').value = '';
+            document.getElementById('adLinkInput').value = '';
+            alert('✅ ' + data.message);
+            loadAdminAds();
+            loadAds();
+        } else {
+            alert('❌ ' + data.message);
+        }
+    } catch (err) {
+        alert('Upload gagal: ' + err.message);
+    } finally {
+        btn.disabled = false; btn.textContent = original;
+    }
+}
+
+function deleteAd(adId) {
+    if (!confirm('Hapus iklan ini?')) return;
+    apiCall('deleteAd', { adId }).then(data => {
+        if (data.success) { loadAdminAds(); loadAds(); }
+        else alert(data.message);
     });
 }
 
