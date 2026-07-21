@@ -423,6 +423,94 @@ body{
     border-left:3px solid #4CAF50;
 }
 
+/* INFO CAROUSEL */
+.info-carousel{
+    position:relative;
+    margin-bottom:24px;
+    overflow:hidden;
+}
+
+.info-slide{
+    display:none;
+    animation:fadeInSlide .4s ease-in-out;
+}
+
+.info-slide.active{
+    display:block;
+}
+
+@keyframes fadeInSlide{
+    from { opacity:0; }
+    to { opacity:1; }
+}
+
+.info-dots{
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    margin-top:12px;
+}
+
+.info-dots span{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:rgba(255,255,255,.3);
+    cursor:pointer;
+    transition:all .3s;
+}
+
+.info-dots span.active{
+    background:var(--yellow);
+    width:20px;
+    border-radius:4px;
+}
+
+/* TIPS PANEL */
+.tips-panel{
+    background:linear-gradient(135deg, #0088FF 0%, #0055CC 100%);
+    border-radius:20px;
+    padding:20px;
+}
+
+.tips-badge{
+    display:inline-block;
+    background:rgba(255,255,255,.25);
+    color:#fff;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:1px;
+    padding:6px 14px;
+    border-radius:12px;
+    margin-bottom:14px;
+}
+
+.tips-content{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.tips-item{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding:10px;
+    background:rgba(255,255,255,.1);
+    border-radius:12px;
+}
+
+.tips-emoji{
+    font-size:20px;
+    flex-shrink:0;
+}
+
+.tips-text{
+    font-size:13px;
+    color:#fff;
+    line-height:1.4;
+}
+
 .hero-banner{
     width:100%;
     height:280px;
@@ -1386,33 +1474,11 @@ body{
                     </div>
                 </div>
 
-                <!-- CARBON OFFSET INFO -->
-                <div id="carbonOffsetPanel" class="carbon-panel">
-                    <div class="carbon-head">
-                        <div class="carbon-badge">🌱 Jejak Karbon & Offset</div>
-                        <div class="carbon-sub">Setiap 1L air = 0.25 kg CO₂e dihindari</div>
-                    </div>
-                    <div class="carbon-stats">
-                        <div class="carbon-stat-item">
-                            <div class="carbon-stat-number" id="carbonTotalDisplay">0</div>
-                            <div class="carbon-stat-label">kg CO₂e<br>Offset</div>
-                        </div>
-                        <div class="carbon-stat-item">
-                            <div class="carbon-stat-number" id="carbonTreesEquiv">0</div>
-                            <div class="carbon-stat-label">Pohon<br>Setara</div>
-                        </div>
-                        <div class="carbon-stat-item">
-                            <div class="carbon-stat-number" id="carbonPointsNeed">0</div>
-                            <div class="carbon-stat-label">Poin ke<br>1 Pohon</div>
-                        </div>
-                    </div>
-                    <div class="carbon-note">
-                        💡 1 pohon serap ~21 kg CO₂/tahun. Tukar poin → tanam pohon untuk offset carbon footprint Anda!
-                    </div>
-                </div>
-
-                <!-- QUEST BOARD -->
-                <div class="quest-board">
+                <!-- INFO CAROUSEL (Quest + Carbon Tips) -->
+                <div class="info-carousel">
+                    <div class="info-slide" id="infoSlide0">
+                        <!-- QUEST BOARD -->
+                        <div class="quest-board">
                     <div class="quest-head">
                         <div class="quest-badge">⚡ QUEST BOARD</div>
                         <div class="quest-sub">Move lebih lama, dapat lebih banyak poin</div>
@@ -1425,6 +1491,58 @@ body{
                         <div class="quest-tier"><div class="quest-tier-time">20<span>min</span></div><div class="quest-tier-pt">+4</div></div>
                     </div>
                     <div class="quest-note">Minimal 5 menit • setiap +5 menit = +1 poin</div>
+                        </div>
+                    </div>
+
+                    <div class="info-slide" id="infoSlide1">
+                        <!-- CARBON OFFSET INFO -->
+                        <div class="carbon-panel">
+                            <div class="carbon-head">
+                                <div class="carbon-badge">🌱 Jejak Karbon & Offset</div>
+                                <div class="carbon-sub">Setiap 1L air = 0.25 kg CO₂e dihindari</div>
+                            </div>
+                            <div class="carbon-stats">
+                                <div class="carbon-stat-item">
+                                    <div class="carbon-stat-number" id="carbonTotalDisplay">0</div>
+                                    <div class="carbon-stat-label">kg CO₂e<br>Offset</div>
+                                </div>
+                                <div class="carbon-stat-item">
+                                    <div class="carbon-stat-number" id="carbonTreesEquiv">0</div>
+                                    <div class="carbon-stat-label">Pohon<br>Setara</div>
+                                </div>
+                                <div class="carbon-stat-item">
+                                    <div class="carbon-stat-number" id="carbonPointsNeed">0</div>
+                                    <div class="carbon-stat-label">Poin ke<br>1 Pohon</div>
+                                </div>
+                            </div>
+                            <div class="carbon-note">
+                                💡 1 pohon serap ~21 kg CO₂/tahun. Tukar poin → tanam pohon untuk offset carbon footprint Anda!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-slide" id="infoSlide2">
+                        <!-- HYDRATION TIPS -->
+                        <div class="tips-panel">
+                            <div class="tips-badge">💧 Tips Hidrasi</div>
+                            <div class="tips-content">
+                                <div class="tips-item">
+                                    <span class="tips-emoji">🎯</span>
+                                    <span class="tips-text"><strong>Target Daily:</strong> 1L per hari dapat +5 bonus poin!</span>
+                                </div>
+                                <div class="tips-item">
+                                    <span class="tips-emoji">🌍</span>
+                                    <span class="tips-text"><strong>Menyelamatkan Bumi:</strong> Pakai air isi ulang, hindari plastik sekali pakai.</span>
+                                </div>
+                                <div class="tips-item">
+                                    <span class="tips-emoji">🏆</span>
+                                    <span class="tips-text"><strong>Semakin Konsisten:</strong> Kumpulkan poin, tanam pohon, offset carbon!</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-dots" id="infoDots"></div>
                 </div>
 
                 <div class="upload-section">
@@ -1751,6 +1869,7 @@ function loadApp() {
     loadGroups();
     loadInboxBadge();
     loadAds();
+    initInfoCarousel();
     startQuestCta();
     startHeroImageRotation();
     setInterval(refresh, 90000);
@@ -2634,6 +2753,48 @@ function deleteAd(adId) {
         if (data.success) { loadAdminAds(); loadAds(); }
         else alert(data.message);
     });
+}
+
+// ═══════════════ INFO CAROUSEL (Quest + Carbon + Tips) ═══════════════
+let infoIdx = 0;
+const INFO_SLIDES = 3;
+let infoTimer = null;
+
+function initInfoCarousel() {
+    const carousel = document.getElementById('infoSlide0');
+    if (!carousel) return;
+
+    // Set slide 0 active
+    showInfoSlide(0);
+
+    // Build dots
+    const dotsContainer = document.getElementById('infoDots');
+    for (let i = 0; i < INFO_SLIDES; i++) {
+        const dot = document.createElement('span');
+        dot.className = i === 0 ? 'active' : '';
+        dot.onclick = () => { clearInterval(infoTimer); showInfoSlide(i); restartInfoTimer(); };
+        dotsContainer.appendChild(dot);
+    }
+
+    // Auto-rotate tiap 6 detik
+    restartInfoTimer();
+}
+
+function showInfoSlide(idx) {
+    for (let i = 0; i < INFO_SLIDES; i++) {
+        const slide = document.getElementById(`infoSlide${i}`);
+        const dot = document.querySelectorAll('#infoDots span')[i];
+        if (slide) slide.classList.toggle('active', i === idx);
+        if (dot) dot.classList.toggle('active', i === idx);
+    }
+    infoIdx = idx;
+}
+
+function restartInfoTimer() {
+    infoTimer = setInterval(() => {
+        infoIdx = (infoIdx + 1) % INFO_SLIDES;
+        showInfoSlide(infoIdx);
+    }, 6000);
 }
 
 // ═══════════════ QUEST BOARD CTA (berganti) ═══════════════
