@@ -27,8 +27,8 @@ function ensureSheetsExist() {
   let users = ss.getSheetByName(SHEET_USERS);
   if (!users) {
     users = ss.insertSheet(SHEET_USERS);
-    users.appendRow(['userId','email','passwordHash','name','joinDate','lastLogin','level','coins','totalHydration_L','avatarBase64','hydrationToken']);
-    users.getRange(1,1,1,10).setFontWeight('bold');
+    users.appendRow(['userId','email','passwordHash','name','joinDate','lastLogin','level','coins','totalHydration_L','avatarBase64','hydrationToken','daily_hydration_today','last_hydration_date','carbon_offset_kg']);
+    users.getRange(1,1,1,14).setFontWeight('bold');
   } else {
     const headers = users.getRange(1, 1, 1, users.getLastColumn()).getValues()[0];
     if (!headers.includes('level')) {
@@ -41,6 +41,11 @@ function ensureSheetsExist() {
     }
     if (!headers.includes('hydrationToken')) {
       users.getRange(1, users.getLastColumn() + 1).setValue('hydrationToken');
+    }
+    if (!headers.includes('daily_hydration_today')) {
+      users.getRange(1, users.getLastColumn() + 1).setValue('daily_hydration_today');
+      users.getRange(1, users.getLastColumn() + 1).setValue('last_hydration_date');
+      users.getRange(1, users.getLastColumn() + 1).setValue('carbon_offset_kg');
     }
   }
 
@@ -1131,19 +1136,40 @@ function handleSubmitHydrationCode(body) {
   }
   if (userIdx === -1) return { success: false, message: 'User tidak ditemukan.' };
 
-  // 4. Tambah hidrasi 0.5L
+  // 4. Tambah hidrasi 0.5L + daily tracking + bonus 1L
   const curHydration = usersData[userIdx][8] || 0;
   const newHydration = curHydration + 0.5;
   usersSheet.getRange(userIdx + 1, 9).setValue(newHydration);
 
-  // 5. Poin
+  // Daily hydration tracking (untuk bonus)
+  const today = new Date().toDateString();
+  const lastDate = usersData[userIdx][12] ? new Date(usersData[userIdx][12]).toDateString() : '';
+  let dailyHydration = 0;
+  if (lastDate === today) {
+    // Hari yang sama, tambah ke daily
+    dailyHydration = (usersData[userIdx][11] || 0) + 0.5;
+  } else {
+    // Hari baru, reset
+    dailyHydration = 0.5;
+  }
+  usersSheet.getRange(userIdx + 1, 12).setValue(dailyHydration);
+  usersSheet.getRange(userIdx + 1, 13).setValue(new Date().toISOString());
+
+  // Carbon offset (total hidrasi * 0.25 kg CO₂e per liter)
+  const carbonOffset = Math.round(newHydration * 0.25 * 100) / 100;
+  usersSheet.getRange(userIdx + 1, 14).setValue(carbonOffset);
+
+  // 5. Poin: +25 untuk submit, +5 bonus jika daily >= 1L, +2 jika owner
+  let bonusPoints = 0;
+  if (dailyHydration >= 1) bonusPoints = 5;
+
   if (ownerIdx === userIdx) {
-    // AoC pakai kode sendiri: +25 (submit) +2 (owner)
+    // AoC pakai kode sendiri: +25 (submit) +bonus(jika ada) +2 (owner)
     const c = usersData[userIdx][7] || 0;
-    usersSheet.getRange(userIdx + 1, 8).setValue(c + PTS_HYDRATION_SUBMIT + PTS_REFERRAL_OWNER);
+    usersSheet.getRange(userIdx + 1, 8).setValue(c + PTS_HYDRATION_SUBMIT + bonusPoints + PTS_REFERRAL_OWNER);
   } else {
     const cu = usersData[userIdx][7] || 0;
-    usersSheet.getRange(userIdx + 1, 8).setValue(cu + PTS_HYDRATION_SUBMIT);
+    usersSheet.getRange(userIdx + 1, 8).setValue(cu + PTS_HYDRATION_SUBMIT + bonusPoints);
     if (ownerIdx !== -1) {
       const co = usersData[ownerIdx][7] || 0;
       usersSheet.getRange(ownerIdx + 1, 8).setValue(co + PTS_REFERRAL_OWNER);
@@ -1154,8 +1180,10 @@ function handleSubmitHydrationCode(body) {
   usageSheet.appendRow([code, userId, userName, ownerId, new Date().toISOString()]);
 
   // 7. Inbox receipt ke user + notif ke owner
-  addInbox(userId, 'hydration_receipt', '💧 Bukti Hidrasi',
-    'Submit 500ml tervalidasi dengan kode ' + code + '. +' + PTS_HYDRATION_SUBMIT + ' poin! Total hidrasi: ' + (Math.round(newHydration * 100) / 100) + 'L');
+  let inboxMsg = 'Submit 500ml tervalidasi dengan kode ' + code + '. +' + PTS_HYDRATION_SUBMIT + ' poin';
+  if (bonusPoints > 0) inboxMsg += ' + ' + bonusPoints + ' Bonus (1L harian tercapai!)';
+  inboxMsg += ' | Total hidrasi: ' + (Math.round(newHydration * 100) / 100) + 'L | Jejak karbon offset: ' + carbonOffset + ' kg CO₂e';
+  addInbox(userId, 'hydration_receipt', '💧 Bukti Hidrasi', inboxMsg);
   if (ownerId && ownerId !== userId) {
     addInbox(ownerId, 'referral_used', '🎉 Referral Code Dipakai',
       userName + ' memakai kode ' + code + '. +' + PTS_REFERRAL_OWNER + ' poin untuk kamu!');
@@ -1168,11 +1196,19 @@ function handleSubmitHydrationCode(body) {
     usersSheet.getRange(userIdx + 1, 11).setValue(hydrationToken);
   }
 
+  const totalPoinEarned = PTS_HYDRATION_SUBMIT + bonusPoints + (ownerIdx === userIdx ? PTS_REFERRAL_OWNER : 0);
+  let msg = 'Hidrasi tervalidasi! +' + PTS_HYDRATION_SUBMIT + ' poin';
+  if (bonusPoints > 0) msg += ' + ' + bonusPoints + ' bonus (1L harian!)';
+  if (ownerIdx === userIdx) msg += ' + ' + PTS_REFERRAL_OWNER + ' (sebagai owner kode)';
+
   return {
     success: true,
-    message: 'Hidrasi tervalidasi! +' + PTS_HYDRATION_SUBMIT + ' poin',
-    coinsEarned: PTS_HYDRATION_SUBMIT,
+    message: msg,
+    coinsEarned: totalPoinEarned,
+    bonusPoints,
     totalHydration: Math.round(newHydration * 100) / 100,
+    dailyHydration: Math.round(dailyHydration * 100) / 100,
+    carbonOffset: carbonOffset,
     hydrationToken
   };
 }
