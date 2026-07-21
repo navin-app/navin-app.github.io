@@ -242,6 +242,105 @@ body{
     text-transform:uppercase;
 }
 
+/* QUEST BOARD — Gen-Z */
+.quest-board{
+    background:#0e0e0e;
+    border:1.5px solid rgba(197,248,42,.3);
+    border-radius:24px;
+    padding:22px;
+    margin-bottom:24px;
+    position:relative;
+    overflow:hidden;
+}
+
+.quest-board::before{
+    content:'';
+    position:absolute;
+    top:-40px;
+    right:-40px;
+    width:140px;
+    height:140px;
+    background:radial-gradient(circle, rgba(197,248,42,.25), transparent 70%);
+    pointer-events:none;
+}
+
+.quest-head{
+    margin-bottom:16px;
+}
+
+.quest-badge{
+    display:inline-block;
+    background:#C5F82A;
+    color:#000;
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:1px;
+    padding:6px 14px;
+    border-radius:12px;
+}
+
+.quest-sub{
+    font-size:12px;
+    opacity:.6;
+    margin-top:8px;
+}
+
+.quest-cta{
+    background:linear-gradient(135deg, #FF2D9B 0%, #C5F82A 130%);
+    color:#000;
+    font-size:16px;
+    font-weight:800;
+    padding:16px 18px;
+    border-radius:16px;
+    margin-bottom:16px;
+    letter-spacing:-.3px;
+    line-height:1.3;
+    transition:opacity .25s ease;
+}
+
+.quest-tiers{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+}
+
+.quest-tier{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(197,248,42,.15);
+    border-radius:14px;
+    padding:12px 4px;
+    text-align:center;
+}
+
+.quest-tier-time{
+    font-size:20px;
+    font-weight:900;
+    color:#fff;
+    line-height:1;
+}
+
+.quest-tier-time span{
+    display:block;
+    font-size:9px;
+    font-weight:600;
+    opacity:.5;
+    margin-top:2px;
+}
+
+.quest-tier-pt{
+    color:#C5F82A;
+    font-size:15px;
+    font-weight:900;
+    margin-top:8px;
+}
+
+.quest-note{
+    text-align:center;
+    font-size:11px;
+    opacity:.5;
+    margin-top:14px;
+}
+
 .hero-banner{
     width:100%;
     height:280px;
@@ -1198,6 +1297,22 @@ body{
                     </div>
                 </div>
 
+                <!-- QUEST BOARD -->
+                <div class="quest-board">
+                    <div class="quest-head">
+                        <div class="quest-badge">⚡ QUEST BOARD</div>
+                        <div class="quest-sub">Move lebih lama, dapat lebih banyak poin</div>
+                    </div>
+                    <div class="quest-cta" id="questCta">🏃 Run 15 minutes to get 3 points</div>
+                    <div class="quest-tiers">
+                        <div class="quest-tier"><div class="quest-tier-time">5<span>min</span></div><div class="quest-tier-pt">+1</div></div>
+                        <div class="quest-tier"><div class="quest-tier-time">10<span>min</span></div><div class="quest-tier-pt">+2</div></div>
+                        <div class="quest-tier"><div class="quest-tier-time">15<span>min</span></div><div class="quest-tier-pt">+3</div></div>
+                        <div class="quest-tier"><div class="quest-tier-time">20<span>min</span></div><div class="quest-tier-pt">+4</div></div>
+                    </div>
+                    <div class="quest-note">Minimal 5 menit • setiap +5 menit = +1 poin</div>
+                </div>
+
                 <div class="upload-section">
                     <label class="upload-label">Share Your Move</label>
                     <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -1479,6 +1594,7 @@ function loadApp() {
     loadGroups();
     loadInboxBadge();
     loadAds();
+    startQuestCta();
     startHeroImageRotation();
     setInterval(refresh, 90000);
     setInterval(loadInboxBadge, 60000);
@@ -2329,6 +2445,25 @@ function deleteAd(adId) {
         if (data.success) { loadAdminAds(); loadAds(); }
         else alert(data.message);
     });
+}
+
+// ═══════════════ QUEST BOARD CTA (berganti) ═══════════════
+const QUEST_CTAS = [
+    '🏃 Run 15 minutes to get 3 points',
+    '🚴 Bike 20 minutes to get 4 points',
+    '🚶 Walk 10 minutes to get 2 points',
+    '🏃 Run 25 minutes to get 5 points',
+    '🚴 Bike 30 minutes to get 6 points'
+];
+let questCtaIdx = 0;
+function startQuestCta() {
+    const el = document.getElementById('questCta');
+    if (!el) return;
+    setInterval(() => {
+        questCtaIdx = (questCtaIdx + 1) % QUEST_CTAS.length;
+        el.style.opacity = '0';
+        setTimeout(() => { el.textContent = QUEST_CTAS[questCtaIdx]; el.style.opacity = '1'; }, 250);
+    }, 4000);
 }
 
 // ─── CHAT (persisten di Sheets, friend & group) ─────────────
