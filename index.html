@@ -1901,14 +1901,14 @@ function mockApiCall(action, data = {}) {
     }
 
     if (action === 'uploadPost') {
-        const post = { postId: 'POST_' + Date.now(), userId: currentUser.userId, caption: data.caption, photoBase64: data.photoBase64, timestamp: new Date().toISOString(), likes_count: 0, coins_earned: 20, name: '' };
+        const post = { postId: 'POST_' + Date.now(), userId: currentUser.userId, caption: data.caption, photoBase64: data.photoBase64, timestamp: new Date().toISOString(), likes_count: 0, coins_earned: 0, name: '' };
         const user = db.users.find(u => u.userId === currentUser.userId);
         if (user) { post.name = user.name; user.coins = (user.coins || 0) + 20; }
         db.posts.push(post);
         db.users = db.users.map(u => u.userId === currentUser.userId ? { ...u, coins: user.coins } : u);
         localStorage.setItem('navin_posts', JSON.stringify(db.posts));
         localStorage.setItem('navin_users', JSON.stringify(db.users));
-        return { success: true, message: 'Post berhasil dibuat! +20 poin', postId: post.postId };
+        return { success: true, message: 'Post berhasil dibuat!', postId: post.postId };
     }
 
     if (action === 'getFeed') {
@@ -2165,7 +2165,7 @@ function loadFeed() {
                         <div class="post-text">${post.caption || ''}</div>
                         <div class="post-stats">
                             <div class="post-stat-item">👍 <strong>${post.likes_count || 0}</strong> Likes</div>
-                            <div class="post-stat-item coin-badge">+${post.coins_earned || 20} Poin</div>
+                            ${(post.coins_earned || 0) > 0 ? `<div class="post-stat-item coin-badge">+${post.coins_earned} Poin</div>` : ''}
                         </div>
                         <div class="post-actions">
                             ${(post.likedBy || '').split(',').indexOf(currentUser.userId) !== -1

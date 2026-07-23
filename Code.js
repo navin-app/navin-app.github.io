@@ -409,15 +409,14 @@ function handleUploadPost(body) {
   const postId = 'POST_' + new Date().getTime();
   const photoRef = photo && photo.length > 0 ? photo.substring(0, 45000) : '';
 
-  // ── Quest: poin aktivitas dari durasi ──
+  // ── Quest: poin HANYA dari durasi aktivitas (tidak ada base +20) ──
   // >= 5 menit baru dapat poin. Kelipatan tiap 5 menit = +1 poin. Cap 3 jam (36 poin).
   const durSec = parseInt(duration_s) || 0;
   let movePoints = 0;
   if (durSec >= 300) {
     movePoints = Math.min(Math.floor(durSec / 300), 36);
   }
-  const POST_BASE = 20;
-  const totalEarned = POST_BASE + movePoints;
+  const totalEarned = movePoints;
 
   postsSheet.appendRow([
     postId,
@@ -446,11 +445,13 @@ function handleUploadPost(body) {
     }
   }
 
-  let msg = 'Post berhasil dibuat! +' + POST_BASE + ' poin';
+  let msg;
   if (movePoints > 0) {
-    msg += ' + ' + movePoints + ' Quest Poin (' + Math.floor(durSec / 60) + ' menit ' + (activity || 'aktivitas') + ')';
+    msg = 'Post berhasil dibuat! +' + movePoints + ' Quest Poin (' + Math.floor(durSec / 60) + ' menit ' + (activity || 'aktivitas') + ')';
   } else if (durSec > 0 && durSec < 300) {
-    msg += ' (aktivitas < 5 menit belum dapat Quest Poin)';
+    msg = 'Post berhasil dibuat! (aktivitas < 5 menit belum dapat Quest Poin)';
+  } else {
+    msg = 'Post berhasil dibuat!';
   }
 
   return { success: true, message: msg, postId, movePoints, coinsEarned: totalEarned };
